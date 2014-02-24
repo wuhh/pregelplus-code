@@ -106,6 +106,9 @@ public:
             sprintf(buf, " %d", out_edges[i]);
             writer.write(buf);
         }
+        sprintf(buf,"\n");
+        writer.write(buf);
+
     }
 };
 
