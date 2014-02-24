@@ -91,16 +91,18 @@ public:
 
         vector<VertexID>& in_edges = v->value().in_edges;
         vector<VertexID>& out_edges = v->value().out_edges;
-        sprintf(buf, "%d\t-2 0");
+        sprintf(buf, "%d\t-2 0",v->id);
         writer.write(buf);
 
         sprintf(buf, " %d", in_edges.size());
+        writer.write(buf);
         for(int i = 0; i < in_edges.size() ; i ++)
         {
             sprintf(buf, " %d", in_edges[i]);
             writer.write(buf);
         }
         sprintf(buf, " %d", out_edges.size());
+        writer.write(buf);
         for(int i = 0; i < out_edges.size() ; i ++)
         {
             sprintf(buf, " %d", out_edges[i]);
