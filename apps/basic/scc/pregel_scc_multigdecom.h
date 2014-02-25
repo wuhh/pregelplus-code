@@ -215,36 +215,37 @@ public:
                 bcast_to_all_nbs( intpair(id, newColor));
 
             }
-            else
-            {
-                hash_map<int, int> map;
-                for(int i=0; i<messages.size(); i++)
-                {
-                    intpair & message=messages[i];
-                    map[message.v1]=message.v2;
-                }
-                vector<VertexID> & in_edges=value().in_edges;
-                vector<VertexID> in_new;
-                for(int i=0; i<in_edges.size(); i++)
-                {
-                    int nbColor=map[in_edges[i]];
-                    if(nbColor==value().color)
-                        in_new.push_back(in_edges[i]);
-                }
-                in_edges.swap(in_new);
-                vector<VertexID> & out_edges=value().out_edges;
-                vector<VertexID> out_new;
-                for(int i=0; i<out_edges.size(); i++)
-                {
-                    int nbColor=map[out_edges[i]];
-                    if(nbColor==value().color)
-                        out_new.push_back(out_edges[i]);
-                }
-                out_edges.swap(out_new);
-                vote_to_halt();
-            }
-
         }
+        else
+        {
+            hash_map<int, int> map;
+            for(int i=0; i<messages.size(); i++)
+            {
+                intpair & message=messages[i];
+                map[message.v1]=message.v2;
+            }
+            vector<VertexID> & in_edges=value().in_edges;
+            vector<VertexID> in_new;
+            for(int i=0; i<in_edges.size(); i++)
+            {
+                int nbColor=map[in_edges[i]];
+                if(nbColor==value().color)
+                    in_new.push_back(in_edges[i]);
+            }
+            in_edges.swap(in_new);
+            vector<VertexID> & out_edges=value().out_edges;
+            vector<VertexID> out_new;
+            for(int i=0; i<out_edges.size(); i++)
+            {
+                int nbColor=map[out_edges[i]];
+                if(nbColor==value().color)
+                    out_new.push_back(out_edges[i]);
+            }
+            out_edges.swap(out_new);
+            vote_to_halt();
+        }
+
+
     }
 }
 ;
