@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
     sort_intpair("/balance/outdeg", "/balance/outdeg_prefixed", 0.001, true);//in real graph, 0.5->0.001
     print("bal_fieldbcast2");
     bal_fieldbcast2("/balance/outdeg_prefixed", "/balance/outdeg_done");
-    print("toUG");
-    toUG("/balance/outdeg_done", "/balance/UG");
+//    print("toUG");
+//    toUG("/balance/outdeg_done", "/balance/UG");
     worker_finalize();
     return 0;
 }

@@ -4,6 +4,9 @@
 #include <vector>
 #include <set>
 #include <string>
+
+#include "global.h"
+
 using namespace std;
 
 class ibinstream{
