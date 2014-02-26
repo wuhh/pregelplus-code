@@ -1,65 +1,107 @@
 #include "basic/pregel-dev.h"
+#include "utils/type.h"
 #include "scc_config.h"
-#include <set>
+#include <map>
 using namespace std;
 
-struct PoolSet
+struct SetPair
 {
-    void add(int id)
+    set<int> minForward;
+    set<int> minBackward;
+
+    SetPair()
+    {}
+    SetPair(const set<int>& f,const set<int>& b)
     {
-        if (pool.size() < SCC_K)
-        {
-            pool.push_back(id);
-        }
-        else
-        {
-            double p = 1.0 * rand() / RAND_MAX;
-            if (p <= SCC_REPLACE_RATE)
-            {
-                int pos = rand() % pool.size();
-                pool[pos] = id;
-            }
-        }
+        minForward = f;
+        minBackward = b;
     }
-    bool contains(int id)
+
+    static bool intersected(const set<int>& h1,const set<int>& h2 )
     {
-        for (int i = 0; i < pool.size(); i++)
+        for(set<int>::iterator it = h1.begin(); it != h1.end(); it++ )
         {
-            if (pool[i] == id)
+            if(h2.count(*it))
+            {
                 return true;
+            }
         }
         return false;
     }
-    vector<int> pool;
-};
-ibinstream &
-operator<<(ibinstream & m, const PoolSet & v)
+
+    bool isSCC() const
+    {
+        return intersected(minForward,minBackward);
+
+    }
+    inline bool operator == (const SetPair & rhs) const
+    {
+        return this->minForward == rhs.minForward && this->minBackward == rhs.minBackward;
+    }
+    bool operator < (const SetPair & rhs) const
+    {
+        if(this->minForward == rhs.minForward)
+            return this->minBackward < rhs.minBackward;
+        else
+            return this->minForward < rhs.minForward;
+    }
+}
+;
+
+
+ibinstream & operator<<(ibinstream & m, const SetPair & v)
 {
-    m << v.pool;
+    m << v.minForward;
+    m << v.minBackward;
     return m;
 }
 
-obinstream &
-operator>>(obinstream & m, PoolSet & v)
+obinstream & operator>>(obinstream & m, SetPair & v)
 {
-    m >> v.pool;
+    m >> v.minForward;
+    m >> v.minBackward;
     return m;
 }
-struct MultiLabelValue_scc
+
+
+struct MultiGDAggValue_scc
+{
+    int nxtColor;
+    map<SetPair,int> cntMap;
+    map<SetPair,int> colorMap;
+};
+ibinstream & operator<<(ibinstream & m, const MultiGDAggValue_scc & v)
+{
+
+    m << v.nxtColor;
+    m << v.cntMap;
+    m << v.colorMap;
+    return m;
+}
+
+obinstream & operator>>(obinstream & m, MultiGDAggValue_scc & v)
+{
+
+    m >> v.nxtColor;
+    m >> v.cntMap;
+    m >> v.colorMap;
+    return m;
+}
+
+struct MultiGDecomValue_scc
 {
     int color;
     //color=-1, means trivial SCC
     //color=-2, means not assigned
     //otherwise, color>=0
     int sccTag;
-    hash_set<VertexID> minForward;
-    hash_set<VertexID> minBackward;
+    set<VertexID> minForward;
+    set<VertexID> minBackward;
     vector<VertexID> in_edges;
     vector<VertexID> out_edges;
 };
 
-ibinstream &
-operator<<(ibinstream & m, const MultiLabelValue_scc & v)
+ibinstream & operator<<(ibinstream & m, const MultiGDecomValue_scc & v)
 {
     m << v.color;
     m << v.sccTag;
@@ -70,8 +112,7 @@ operator<<(ibinstream & m, const MultiLabelValue_scc & v)
     return m;
 }
 
-obinstream &
-operator>>(obinstream & m, MultiLabelValue_scc & v)
+obinstream & operator>>(obinstream & m, MultiGDecomValue_scc & v)
 {
     m >> v.color;
     m >> v.sccTag;
@@ -84,11 +125,11 @@ operator>>(obinstream & m, MultiLabelValue_scc & v)
 
 //====================================
 
-class MultiLabelVertex_scc: public Vertex<VertexID, MultiLabelValue_scc,
-            VertexID>
+class MultiGDecomVertex_scc : public Vertex<VertexID, MultiGDecomValue_scc,
+            intpair>
 {
 public:
-    void bcast_to_in_nbs(VertexID msg)
+    void bcast_to_in_nbs(intpair msg)
     {
         vector<VertexID> & nbs = value().in_edges;
         for (int i = 0; i < nbs.size(); i++)
@@ -97,7 +138,7 @@ public:
         }
     }
 
-    void bcast_to_out_nbs(VertexID msg)
+    void bcast_to_out_nbs(intpair msg)
     {
         vector<VertexID> & nbs = value().out_edges;
         for (int i = 0; i < nbs.size(); i++)
@@ -106,149 +147,217 @@ public:
         }
     }
 
+    void bcast_to_all_nbs(intpair msg)
+    {
+        bcast_to_in_nbs(msg);
+        bcast_to_out_nbs(msg);
+    }
+
     virtual void compute(MessageContainer & messages)
     {
         if (step_num() == 1)
         {
-            // for Agg to sample
-            return;
+            if (id != -1)
+            {
+                if (value().sccTag != 0)
+                {
+                    vote_to_halt();
+                }
+            }
         }
         else if (step_num() == 2)
         {
-            hash_map<int, PoolSet>* agg = (hash_map<int, PoolSet>*) getAgg();
-            MultiLabelValue_scc& val = value();
+            MultiGDAggValue_scc* agg = (MultiGDAggValue_scc*) getAgg();
 
-            if (id != -1 & val.sccTag == 0)
+            if (id == -1)
             {
-                int color = val.color;
-                if ((*agg)[color].contains(id))
-                {
-                    val.minForward.insert(id);
-                    val.minBackward.insert(id);
-                    bcast_to_out_nbs(id);
-                    bcast_to_in_nbs(-id - 1);
-                }
+
+                value().color = agg->nxtColor;  //@@@@@@@@@@@@@@@@@@@
             }
-            vote_to_halt();
-        }
-        else
-        {
-            MultiLabelValue_scc& val = value();
-            if (val.sccTag == 0)
+            else if (value().sccTag == 0)
             {
-                for (int i = 0; i < messages.size(); i++)
+                SetPair pair = SetPair(value().minForward, value().minBackward);
+                if (SetPair::intersected(value().minForward, value().minBackward))
                 {
-                    int cur = messages[i];
-                    if (cur < 0)
-                    {
-                        cur = -cur - 1; //backward src
-                        if (!val.minBackward.count(cur))
-                        {
-                            val.minBackward.insert(cur);
-                            bcast_to_in_nbs(-cur - 1);
-                        }
-                    }
-                    else
-                    {
-                        if (!val.minForward.count(cur))
-                        {
-                            val.minForward.insert(cur);
-                            bcast_to_out_nbs(cur);
-                        }
-                    }
-                }
-            }
-            vote_to_halt();
-        }
-    }
-};
-
-class MultiLabelAgg_scc: public Aggregator<MultiLabelVertex_scc,
-            hash_map<int, PoolSet>, hash_map<int, PoolSet> >
-{
-private:
-    hash_map<int, PoolSet> state;
-public:
-    virtual void init()
-    {}
-
-    virtual void stepPartial(MultiLabelVertex_scc* v)
-    {
-        if(step_num() == 1)
-        {
-            const MultiLabelValue_scc& val = v->value();
-
-            if(v->id != -1 & val.sccTag == 0)
-            {
-                int color = val.color;
-                if(state.count(color) == 0)
-                {
-                    state[color] = PoolSet();
-                }
-                state[color].add(v->id);
-            }
-        }
-    }
-
-    virtual void stepFinal(hash_map<int, PoolSet>* part)
-    {
-        if(step_num() == 1)
-        {
-            for(hash_map<int, PoolSet>::iterator it = part->
-                    begin();
-                    it !=part->end() ;
-                    it ++)
-            {
-                int key = it->first;
-                const PoolSet& value = it->second;
-
-                if(state.count(key) == 0)
-                {
-                    state[key] = value;
+                    value().sccTag = 1;
                 }
                 else
                 {
-                    PoolSet& myValue = state[key];
-                    for(int i =0 ;i < value.pool.size() ; i ++)
+                    int cnt = agg->cntMap[pair];
+                    if(cnt <= SCC_THRESHOLD)
                     {
-                        //myValue.add(value.pool[i]);
+                        value().sccTag = -1 ;
                     }
                 }
+
+                int newColor = agg->colorMap[pair];
+                value().color = newColor;
+                bcast_to_all_nbs( intpair(id, newColor));
+
+            }
+        }
+        else
+        {
+            hash_map<int, int> map;
+            for(int i=0; i<messages.size(); i++)
+            {
+                intpair & message=messages[i];
+                map[message.v1]=message.v2;
+            }
+            vector<VertexID> & in_edges=value().in_edges;
+            vector<VertexID> in_new;
+            for(int i=0; i<in_edges.size(); i++)
+            {
+                int nbColor=map[in_edges[i]];
+                if(nbColor==value().color)
+                    in_new.push_back(in_edges[i]);
+            }
+            in_edges.swap(in_new);
+            vector<VertexID> & out_edges=value().out_edges;
+            vector<VertexID> out_new;
+            for(int i=0; i<out_edges.size(); i++)
+            {
+                int nbColor=map[out_edges[i]];
+                if(nbColor==value().color)
+                    out_new.push_back(out_edges[i]);
+            }
+            out_edges.swap(out_new);
+            vote_to_halt();
+        }
+
+    }
+}
+;
+
+
+class MultiGDAgg_scc : public Aggregator<MultiGDecomVertex_scc,
+            MultiGDAggValue_scc, MultiGDAggValue_scc>
+{
+private:
+    MultiGDAggValue_scc state;
+public:
+    virtual void init()
+    {
+        state.nxtColor = -1;
+    }
+
+    virtual void stepPartial(MultiGDecomVertex_scc* v)
+    {
+        const MultiGDecomValue_scc& val = v->value();
+        if (step_num() == 1)
+        {
+            if (v->id == -1)
+            {
+                state.nxtColor = v->value().color;
+
+            }
+            else if (val.sccTag == 0)
+            {
+                SetPair pair = SetPair(val.minForward, val.minBackward);
+                if (state.cntMap.count(pair) == 0)
+                {
+                    state.cntMap[pair] = 1;
+
+                }
+                else
+                {
+                    state.cntMap[pair] += 1;
+                }
+            }
+        }
+        else if (step_num() == 3)
+        {
+            if (v->id == -1)
+            {
+                state.nxtColor = val.color;
             }
         }
     }
 
-    virtual hash_map<int, PoolSet>* finishPartial()
+    virtual void stepFinal(MultiGDAggValue_scc* part)
     {
-        return &state;
-    }
-    virtual hash_map<int, PoolSet>* finishFinal()
-    {
-        return &state;
+        if (step_num() == 1)
+        {
+            if (part->nxtColor != -1)
+            {
+                state.nxtColor = part->nxtColor;
+            }
+
+            for (map<SetPair,int>::iterator it = part->
+                                                 cntMap.begin();
+                    it != part->cntMap.end();
+                    it++)
+            {
+                const SetPair& key = it->first;
+                int value = it->second;
+                if(state.cntMap.count(key) == 0)
+                {
+
+                    state.cntMap[key] = value;
+                }
+                else
+                {
+                    state.cntMap[key] += value;
+                }
+            }
+
+        }
     }
 
+    virtual MultiGDAggValue_scc* finishPartial()
+    {
+        return &state;
+    }
+    virtual MultiGDAggValue_scc* finishFinal()
+    {
+        if(step_num() == 1)
+        {
+            int max = -1;
+            int nxtColor = state.nxtColor;
+
+            for(map<SetPair,int>::iterator it = state.cntMap.begin(); it != state.cntMap.end(); it++)
+            {
+                const SetPair& key = it->first;
+                int cnt = it->second;
+
+                if(!key.isSCC() && cnt > SCC_THRESHOLD && cnt > max)
+                {
+                    max = cnt;
+                }
+                state.colorMap[key] = nxtColor;
+                nxtColor ++;
+            }
+            state.nxtColor = nxtColor;
+            cout << "%%%%%%%%%%%%%% Max Subgraph Size = " << max << " %%%%%%%%%%%%"  << endl;
+
+
+        }
+
+
+
+        return &state;
+    }
 };
 
-class MultiLabelWorker_scc: public Worker<MultiLabelVertex_scc,
-            MultiLabelAgg_scc>
+//====================================
+
+class MultiGDecomWorker_scc : public Worker<MultiGDecomVertex_scc,
+            MultiGDAgg_scc>
 {
     char buf[100];
 
 public:
     //C version
-    virtual MultiLabelVertex_scc*
-    toVertex(char* line)
+    virtual MultiGDecomVertex_scc* toVertex(char* line)
     {
         char * pch;
         pch = strtok(line, "\t");
-        MultiLabelVertex_scc* v = new MultiLabelVertex_scc;
+        MultiGDecomVertex_scc* v = new MultiGDecomVertex_scc;
         v->id = atoi(pch);
         pch = strtok(NULL, " ");
         v->value().color = atoi(pch);
         if (v->id == -1)
-        {
             return v;
-        }
         pch = strtok(NULL, " ");
         v->value().sccTag = atoi(pch);
 
@@ -257,8 +366,25 @@ public:
         for (int i = 0; i < num; i++)
         {
             pch = strtok(NULL, " ");
+            v->value().minForward.insert(atoi(pch));
+        }
+
+        pch = strtok(NULL, " ");
+        num = atoi(pch);
+        for (int i = 0; i < num; i++)
+        {
+            pch = strtok(NULL, " ");
+            v->value().minBackward.insert(atoi(pch));
+        }
+
+        pch = strtok(NULL, " ");
+        num = atoi(pch);
+        for (int i = 0; i < num; i++)
+        {
+            pch = strtok(NULL, " ");
             v->value().in_edges.push_back(atoi(pch));
         }
+
         pch = strtok(NULL, " ");
         num = atoi(pch);
         for (int i = 0; i < num; i++)
@@ -266,10 +392,11 @@ public:
             pch = strtok(NULL, " ");
             v->value().out_edges.push_back(atoi(pch));
         }
+
         return v;
     }
 
-    virtual void toline(MultiLabelVertex_scc* v, BufferedWriter & writer)
+    virtual void toline(MultiGDecomVertex_scc* v, BufferedWriter & writer)
     {
         if (v->id == -1)
         {
@@ -279,31 +406,9 @@ public:
         }
         vector<VertexID> & in_edges = v->value().in_edges;
         vector<VertexID> & out_edges = v->value().out_edges;
-        hash_set<VertexID>& minForward = v->value().minForward;
-        hash_set<VertexID>& minBackward = v->value().minBackward;
 
         sprintf(buf, "%d\t%d %d", v->id, v->value().color, v->value().sccTag);
         writer.write(buf);
-
-        sprintf(buf, " %d", minForward.size());
-        writer.write(buf);
-
-        for (hash_set<VertexID>::iterator it = minForward.begin();
-                it != minForward.end(); it++)
-        {
-            sprintf(buf, " %d", *it);
-            writer.write(buf);
-        }
-
-        sprintf(buf, " %d", minBackward.size());
-        writer.write(buf);
-
-        for (hash_set<VertexID>::iterator it = minBackward.begin();
-                it != minBackward.end(); it++)
-        {
-            sprintf(buf, " %d", *it);
-            writer.write(buf);
-        }
 
         sprintf(buf, " %d", in_edges.size());
         writer.write(buf);
@@ -324,15 +429,15 @@ public:
     }
 };
 
-void scc_multilabel(string in_path, string out_path)
+void scc_multiGDecom(string in_path, string out_path)
 {
     WorkerParams param;
     param.input_path = in_path;
     param.output_path = out_path;
     param.force_write = true;
     param.native_dispatcher = false;
-    MultiLabelAgg_scc agg;
-    MultiLabelWorker_scc worker;
+    MultiGDecomWorker_scc worker;
+    MultiGDAgg_scc agg;
     worker.setAggregator(&agg);
     worker.run(param);
 }
