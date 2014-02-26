@@ -63,31 +63,6 @@ obinstream & operator>>(obinstream & m, SetPair & v)
     return m;
 }
 
-//====================================
-template <class KeyT, class ValT>
-ibinstream & operator<<(ibinstream & m, const map<KeyT, ValT> & v)
-{
-    m<<v.size();
-    for(typename map<KeyT, ValT>::const_iterator it=v.begin(); it!=v.end(); ++it)
-    {
-        m<<it->first;
-        m<<it->second;
-    }
-    return m;
-}
-template <class KeyT, class ValT>
-obinstream & operator >>(obinstream & m, map<KeyT, ValT> & v)
-{
-    size_t size;
-    m>>size;
-    for(int i=0; i<size; i++)
-    {
-        KeyT key;
-        m>>key;
-        m>>v[key];
-    }
-    return m;
-}
 struct MultiGDAggValue_scc
 {
     int nxtColor;
