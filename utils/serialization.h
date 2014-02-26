@@ -99,6 +99,17 @@ ibinstream & operator<<(ibinstream & m, const string & str){
 }
 
 template <class KeyT, class ValT>
+ibinstream & operator<<(ibinstream & m, const map<KeyT, ValT> & v)
+{
+    m<<v.size();
+    for(typename map<KeyT, ValT>::const_iterator it=v.begin(); it!=v.end(); ++it)
+    {
+        m<<it->first;
+        m<<it->second;
+    }
+    return m;
+}
+template <class KeyT, class ValT>
 ibinstream & operator<<(ibinstream & m, const hash_map<KeyT, ValT> & v){
 	m<<v.size();
 	for(typename hash_map<KeyT, ValT>::const_iterator it=v.begin(); it!=v.end(); ++it){
@@ -220,7 +231,19 @@ obinstream & operator>>(obinstream & m, string & str){
 	str.append(data, length);
 	return m;
 }
-
+template <class KeyT, class ValT>
+obinstream & operator >>(obinstream & m, map<KeyT, ValT> & v)
+{
+    size_t size;
+    m>>size;
+    for(int i=0; i<size; i++)
+    {
+        KeyT key;
+        m>>key;
+        m>>v[key];
+    }
+    return m;
+}
 template <class KeyT, class ValT>
 obinstream & operator>>(obinstream & m, hash_map<KeyT, ValT> & v){
 	size_t size;

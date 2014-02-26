@@ -116,6 +116,7 @@ public:
 
 void pregel_tosccgraphformat(string in_path, string out_path)
 {
+	OutputControlNode = false;
     WorkerParams param;
     param.input_path=in_path;
     param.output_path=out_path;

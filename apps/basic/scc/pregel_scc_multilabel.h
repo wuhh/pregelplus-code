@@ -211,7 +211,7 @@ public:
                     PoolSet& myValue = state[key];
                     for(int i =0 ;i < value.pool.size() ; i ++)
                     {
-                        myValue.add(value.pool[i]);
+                        //myValue.add(value.pool[i]);
                     }
                 }
             }
@@ -246,7 +246,9 @@ public:
         pch = strtok(NULL, " ");
         v->value().color = atoi(pch);
         if (v->id == -1)
+        {
             return v;
+        }
         pch = strtok(NULL, " ");
         v->value().sccTag = atoi(pch);
 

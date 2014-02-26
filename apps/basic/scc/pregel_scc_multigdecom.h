@@ -1,25 +1,25 @@
 #include "basic/pregel-dev.h"
 #include "utils/type.h"
 #include "scc_config.h"
-
+#include <map>
 using namespace std;
 
 struct SetPair
 {
-    hash_set<int> minForward;
-    hash_set<int> minBackward;
+    set<int> minForward;
+    set<int> minBackward;
 
     SetPair()
     {}
-    SetPair(const hash_set<int>& f,const hash_set<int>& b)
+    SetPair(const set<int>& f,const set<int>& b)
     {
         minForward = f;
         minBackward = b;
     }
 
-    static bool intersected(const hash_set<int>& h1,const hash_set<int>& h2 )
+    static bool intersected(const set<int>& h1,const set<int>& h2 )
     {
-        for(hash_set<int>::iterator it = h1.begin(); it != h1.end(); it++ )
+        for(set<int>::iterator it = h1.begin(); it != h1.end(); it++ )
         {
             if(h2.count(*it))
             {
@@ -38,62 +38,68 @@ struct SetPair
     {
         return this->minForward == rhs.minForward && this->minBackward == rhs.minBackward;
     }
-    int hash()
+    bool operator < (const SetPair & rhs) const
     {
-        size_t seed=0;
-        for(hash_set<int>::iterator it = minForward.begin(); it != minForward.end(); it++ )
-        {
-            hash_combine(seed, *it);
-        }
-        for(hash_set<int>::iterator it = minBackward.begin(); it != minBackward.end(); it++ )
-        {
-            hash_combine(seed, *it);
-        }
-        return seed;
+        if(this->minForward == rhs.minForward)
+            return this->minBackward < rhs.minBackward;
+        else
+            return this->minForward < rhs.minForward;
     }
-
-};
-namespace __gnu_cxx
-{
-template<>
-struct hash<SetPair>
-{
-    size_t operator()(SetPair pair) const
-    {
-        return pair.hash();
-    }
-};
 }
+;
+
+
 ibinstream & operator<<(ibinstream & m, const SetPair & v)
 {
-
     m << v.minForward;
     m << v.minBackward;
-
     return m;
 }
 
 obinstream & operator>>(obinstream & m, SetPair & v)
 {
-
     m >> v.minForward;
     m >> v.minBackward;
     return m;
 }
 
 //====================================
-
+template <class KeyT, class ValT>
+ibinstream & operator<<(ibinstream & m, const map<KeyT, ValT> & v)
+{
+    m<<v.size();
+    for(typename map<KeyT, ValT>::const_iterator it=v.begin(); it!=v.end(); ++it)
+    {
+        m<<it->first;
+        m<<it->second;
+    }
+    return m;
+}
+template <class KeyT, class ValT>
+obinstream & operator >>(obinstream & m, map<KeyT, ValT> & v)
+{
+    size_t size;
+    m>>size;
+    for(int i=0; i<size; i++)
+    {
+        KeyT key;
+        m>>key;
+        m>>v[key];
+    }
+    return m;
+}
 struct MultiGDAggValue_scc
 {
     int nxtColor;
-    hash_map<SetPair,int> cntMap;
-    hash_map<SetPair,int> colorMap;
+    SetPair maxPair;
+    map<SetPair,int> cntMap;
+    map<SetPair,int> colorMap;
 };
 ibinstream & operator<<(ibinstream & m, const MultiGDAggValue_scc & v)
 {
 
     m << v.nxtColor;
-
+    m << v.maxPair;
     m << v.cntMap;
     m << v.colorMap;
     return m;
@@ -103,7 +109,7 @@ obinstream & operator>>(obinstream & m, MultiGDAggValue_scc & v)
 {
 
     m >> v.nxtColor;
-
+    m >> v.maxPair;
     m >> v.cntMap;
     m >> v.colorMap;
     return m;
@@ -116,8 +122,8 @@ struct MultiGDecomValue_scc
     //color=-2, means not assigned
     //otherwise, color>=0
     int sccTag;
-    hash_set<VertexID> minForward;
-    hash_set<VertexID> minBackward;
+    set<VertexID> minForward;
+    set<VertexID> minBackward;
     vector<VertexID> in_edges;
     vector<VertexID> out_edges;
 };
@@ -189,6 +195,15 @@ public:
         else if (step_num() == 2)
         {
             MultiGDAggValue_scc* agg = (MultiGDAggValue_scc*) getAgg();
+            SetPair pair = SetPair(value().minForward, value().minBackward);
+
+            if((*agg).maxPair == pair)
+            {
+            	cout << id << " " << endl;
+            }
+            vote_to_halt();
+            return;
+
             if (id == -1)
             {
 
@@ -203,7 +218,7 @@ public:
                 }
                 else
                 {
-                    int cnt = agg->cntMap.count(pair);
+                    int cnt = agg->cntMap[pair];
                     if(cnt <= SCC_THRESHOLD)
                     {
                         value().sccTag = -1 ;
@@ -216,9 +231,9 @@ public:
 
             }
         }
-        else
+        else if (step_num() == 3)
         {
-            hash_map<int, int> map;
+            map<int, int> map;
             for(int i=0; i<messages.size(); i++)
             {
                 intpair & message=messages[i];
@@ -242,9 +257,20 @@ public:
                     out_new.push_back(out_edges[i]);
             }
             out_edges.swap(out_new);
-            vote_to_halt();
+            //vote_to_halt();
         }
-
+        else
+        {
+        	MultiGDAggValue_scc* agg = (MultiGDAggValue_scc*) getAgg();
+        	SetPair pair = SetPair(value().minForward, value().minBackward);
+        	/*
+        	if( (*agg).maxPair == pair )
+        	{
+        		cout << id << " " << endl;
+        	}
+        	*/
+        	vote_to_halt();
+        }
 
     }
 }
@@ -267,10 +293,14 @@ public:
         const MultiGDecomValue_scc& val = v->value();
         if (step_num() == 1)
         {
-
+        	if(v->id == 19998)
+        	{
+        		state.maxPair =  SetPair(val.minForward, val.minBackward);
+        	}
             if (v->id == -1)
             {
                 state.nxtColor = v->value().color;
+
             }
             else if (val.sccTag == 0)
             {
@@ -278,6 +308,7 @@ public:
                 if (state.cntMap.count(pair) == 0)
                 {
                     state.cntMap[pair] = 1;
+
                 }
                 else
                 {
@@ -302,8 +333,14 @@ public:
             {
                 state.nxtColor = part->nxtColor;
             }
-            for (hash_map<SetPair,int>::iterator it = part->
-                    cntMap.begin();
+
+            if(part->maxPair.minBackward.size( ) + part->maxPair.minForward.size( ) )
+            {
+            	state.maxPair = part->maxPair;
+            }
+
+            for (map<SetPair,int>::iterator it = part->
+                                                 cntMap.begin();
                     it != part->cntMap.end();
                     it++)
             {
@@ -311,6 +348,7 @@ public:
                 int value = it->second;
                 if(state.cntMap.count(key) == 0)
                 {
+
                     state.cntMap[key] = value;
                 }
                 else
@@ -318,6 +356,7 @@ public:
                     state.cntMap[key] += value;
                 }
             }
+
         }
     }
 
@@ -331,7 +370,8 @@ public:
         {
             int max = -1;
             int nxtColor = state.nxtColor;
-            for(hash_map<SetPair,int>::iterator it = state.cntMap.begin(); it != state.cntMap.end(); it++)
+
+            for(map<SetPair,int>::iterator it = state.cntMap.begin(); it != state.cntMap.end(); it++)
             {
                 const SetPair& key = it->first;
                 int cnt = it->second;
@@ -339,6 +379,7 @@ public:
                 if(!key.isSCC() && cnt > SCC_THRESHOLD && cnt > max)
                 {
                     max = cnt;
+                    //state.maxPair = key;
                 }
                 state.colorMap[key] = nxtColor;
                 nxtColor ++;
@@ -346,7 +387,11 @@ public:
             state.nxtColor = nxtColor;
             cout << "%%%%%%%%%%%%%% Max Subgraph Size = " << max << " %%%%%%%%%%%%"  << endl;
 
+
         }
+
+
+
         return &state;
     }
 };
