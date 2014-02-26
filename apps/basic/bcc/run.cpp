@@ -13,13 +13,14 @@
 #include "pregel_ppa_case1mark.h"
 #include "pregel_ppa_edgeback.h"
 
-
-void print(const char* str) {
-    if(_my_rank == 0) cout << str << endl;
+void print(const char* str)
+{
+    if (_my_rank == 0)
+        cout << str << endl;
 }
 
-
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
     init_workers();
     print(argv[1]);
     print("ppa_hashmin");
@@ -29,7 +30,7 @@ int main(int argc, char* argv[]) {
     ppa_spantree("/ppa/hashmin_ppa", "/ppa/spantree_ppa", true);
 
     print("ppa_sv");
-    pregel_sv(argv[1], "/ppa/sv");//to test time only
+    pregel_sv(argv[1], "/ppa/sv"); //to test time only
 
     //ppa_hashmin_spantree("/btc", "/ppa/spantree_ppa", true);//////
     print("ppa_etour");
@@ -45,9 +46,9 @@ int main(int argc, char* argv[]) {
     param.add_input_path(argv[1]);
     param.add_input_path("/ppa/spantree_ppa");
     param.add_input_path("/ppa/listrank2_ppa");
-    param.output_path="/ppa/merge_ppa";
-    param.force_write=true;
-    param.native_dispatcher=false;
+    param.output_path = "/ppa/merge_ppa";
+    param.force_write = true;
+    param.native_dispatcher = false;
     print("ppa_merge");
     ppa_merge(param);
 
@@ -57,25 +58,24 @@ int main(int argc, char* argv[]) {
     ppa_auxgraph("/ppa/minmax_ppa", "/ppa/auxg_ppa");
     print("ppa_triphashmin");
     ppa_triphashmin("/ppa/auxg_ppa", "/ppa/triphashmin_ppa", true);
-  
-  
+
     print("ppa_tripsv");
     ppa_tripsv("/ppa/auxg_ppa", "/ppa/tripsv_ppa");
     MultiInputParams param1;
     param1.add_input_path("/ppa/minmax_ppa");
     param1.add_input_path("/ppa/triphashmin_ppa");
-    param1.output_path="/ppa/case1mark_ppa";
-    param1.force_write=true;
-    param1.native_dispatcher=false;
+    param1.output_path = "/ppa/case1mark_ppa";
+    param1.force_write = true;
+    param1.native_dispatcher = false;
     print("ppa_case1");
     ppa_case1(param1); // non tree edge
     MultiInputParams param2;
     param2.add_input_path("/ppa/spantree_ppa");
     param2.add_input_path("/ppa/listrank2_ppa");
     param2.add_input_path("/ppa/case1mark_ppa");
-    param2.output_path="/ppa/edgeback_ppa";
-    param2.force_write=true;
-    param2.native_dispatcher=false;
+    param2.output_path = "/ppa/edgeback_ppa";
+    param2.force_write = true;
+    param2.native_dispatcher = false;
     print("ppa_eback");
     ppa_eback(param2); // visualization
     worker_finalize();
