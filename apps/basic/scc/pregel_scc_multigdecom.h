@@ -6,13 +6,15 @@ using namespace std;
 
 struct SetPair
 {
+    int color;
     set<int> minForward;
     set<int> minBackward;
 
     SetPair()
     {}
-    SetPair(const set<int>& f,const set<int>& b)
+    SetPair(int c, const set<int>& f,const set<int>& b)
     {
+        color = c;
         minForward = f;
         minBackward = b;
     }
@@ -36,14 +38,21 @@ struct SetPair
     }
     inline bool operator == (const SetPair & rhs) const
     {
-        return this->minForward == rhs.minForward && this->minBackward == rhs.minBackward;
+        return color == rhs.color && this->minForward == rhs.minForward && this->minBackward == rhs.minBackward;
     }
     bool operator < (const SetPair & rhs) const
     {
-        if(this->minForward == rhs.minForward)
-            return this->minBackward < rhs.minBackward;
+        if(this->color == rhs.color)
+        {
+            if(this->minForward == rhs.minForward)
+                return this->minBackward < rhs.minBackward;
+            else
+                return this->minForward < rhs.minForward;
+        }
         else
-            return this->minForward < rhs.minForward;
+        {
+            return this->color < rhs.color;
+        }
     }
 }
 ;
@@ -51,6 +60,7 @@ struct SetPair
 
 ibinstream & operator<<(ibinstream & m, const SetPair & v)
 {
+    m << v.color;
     m << v.minForward;
     m << v.minBackward;
     return m;
@@ -58,6 +68,7 @@ ibinstream & operator<<(ibinstream & m, const SetPair & v)
 
 obinstream & operator>>(obinstream & m, SetPair & v)
 {
+    m >> v.color;
     m >> v.minForward;
     m >> v.minBackward;
     return m;
@@ -66,7 +77,6 @@ obinstream & operator>>(obinstream & m, SetPair & v)
 struct MultiGDAggValue_scc
 {
     int nxtColor;
-    SetPair maxPair;
     map<SetPair,int> cntMap;
     map<SetPair,int> colorMap;
 };
@@ -74,7 +84,6 @@ ibinstream & operator<<(ibinstream & m, const MultiGDAggValue_scc & v)
 {
 
     m << v.nxtColor;
-    m << v.maxPair;
     m << v.cntMap;
     m << v.colorMap;
     return m;
@@ -84,7 +93,6 @@ obinstream & operator>>(obinstream & m, MultiGDAggValue_scc & v)
 {
 
     m >> v.nxtColor;
-    m >> v.maxPair;
     m >> v.cntMap;
     m >> v.colorMap;
     return m;
@@ -170,14 +178,6 @@ public:
         else if (step_num() == 2)
         {
             MultiGDAggValue_scc* agg = (MultiGDAggValue_scc*) getAgg();
-            SetPair pair = SetPair(value().minForward, value().minBackward);
-
-            if((*agg).maxPair == pair)
-            {
-            	cout << id << " " << endl;
-            }
-            vote_to_halt();
-            return;
 
             if (id == -1)
             {
@@ -186,7 +186,7 @@ public:
             }
             else if (value().sccTag == 0)
             {
-                SetPair pair = SetPair(value().minForward, value().minBackward);
+                SetPair pair = SetPair(value().color, value().minForward, value().minBackward);
                 if (SetPair::intersected(value().minForward, value().minBackward))
                 {
                     value().sccTag = 1;
@@ -199,14 +199,13 @@ public:
                         value().sccTag = -1 ;
                     }
                 }
-
                 int newColor = agg->colorMap[pair];
                 value().color = newColor;
                 bcast_to_all_nbs( intpair(id, newColor));
 
             }
         }
-        else if (step_num() == 3)
+        else
         {
             map<int, int> map;
             for(int i=0; i<messages.size(); i++)
@@ -232,19 +231,7 @@ public:
                     out_new.push_back(out_edges[i]);
             }
             out_edges.swap(out_new);
-            //vote_to_halt();
-        }
-        else
-        {
-        	MultiGDAggValue_scc* agg = (MultiGDAggValue_scc*) getAgg();
-        	SetPair pair = SetPair(value().minForward, value().minBackward);
-        	/*
-        	if( (*agg).maxPair == pair )
-        	{
-        		cout << id << " " << endl;
-        	}
-        	*/
-        	vote_to_halt();
+            vote_to_halt();
         }
 
     }
@@ -268,10 +255,6 @@ public:
         const MultiGDecomValue_scc& val = v->value();
         if (step_num() == 1)
         {
-        	if(v->id == 19998)
-        	{
-        		state.maxPair =  SetPair(val.minForward, val.minBackward);
-        	}
             if (v->id == -1)
             {
                 state.nxtColor = v->value().color;
@@ -279,7 +262,7 @@ public:
             }
             else if (val.sccTag == 0)
             {
-                SetPair pair = SetPair(val.minForward, val.minBackward);
+                SetPair pair = SetPair(val.color, val.minForward, val.minBackward);
                 if (state.cntMap.count(pair) == 0)
                 {
                     state.cntMap[pair] = 1;
@@ -308,12 +291,6 @@ public:
             {
                 state.nxtColor = part->nxtColor;
             }
-
-            if(part->maxPair.minBackward.size( ) + part->maxPair.minForward.size( ) )
-            {
-            	state.maxPair = part->maxPair;
-            }
-
             for (map<SetPair,int>::iterator it = part->
                                                  cntMap.begin();
                     it != part->cntMap.end();
@@ -361,12 +338,7 @@ public:
             }
             state.nxtColor = nxtColor;
             cout << "%%%%%%%%%%%%%% Max Subgraph Size = " << max << " %%%%%%%%%%%%"  << endl;
-
-
         }
-
-
-
         return &state;
     }
 };
