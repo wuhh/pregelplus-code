@@ -35,7 +35,15 @@ public:
             in_messages[v->id] = i; //CHANGED FOR VADD
         }
     }
-
+    void reinit(vector<VertexT*> vertexes)
+    {
+        v_msg_bufs.resize(vertexes.size());
+	 in_messages.clear();
+        for (int i = 0; i < vertexes.size(); i++) {
+            VertexT* v = vertexes[i];
+            in_messages[v->id] = i; //CHANGED FOR VADD
+        }
+    }
     void add_message(const KeyT& id, const MessageT& msg)
     {
         hasMsg(); //cannot end yet even every vertex halts

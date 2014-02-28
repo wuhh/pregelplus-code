@@ -185,19 +185,19 @@ void twitter_balance()
     scc_minlabel("/sccexp/twitter_balance/owcty", "/sccexp/twitter_balance/minlabel");
     scc_minGDecom("/sccexp/twitter_balance/minlabel", "/sccexp/twitter_balance/output2");
     /*
-        if(_my_rank == 0)
-            cout << "Third Round" << endl;
+    if(_my_rank == 0)
+        cout << "Third Round" << endl;
 
-        pregel_owcty("/sccexp/twitter_balance/output2", "/sccexp/twitter_balance/owcty");
-        scc_minlabel("/sccexp/twitter_balance/owcty", "/sccexp/twitter_balance/minlabel");
-        scc_minGDecom("/sccexp/twitter_balance/minlabel", "/sccexp/twitter_balance/output3");
+    pregel_owcty("/sccexp/twitter_balance/output2", "/sccexp/twitter_balance/owcty");
+    scc_minlabel("/sccexp/twitter_balance/owcty", "/sccexp/twitter_balance/minlabel");
+    scc_minGDecom("/sccexp/twitter_balance/minlabel", "/sccexp/twitter_balance/output3");
 
-        if(_my_rank == 0)
-            cout << "Forth Round" << endl;
+    if(_my_rank == 0)
+        cout << "Forth Round" << endl;
 
-        pregel_owcty("/sccexp/twitter_balance/output3", "/sccexp/twitter_balance/owcty");
-        scc_minlabel("/sccexp/twitter_balance/owcty", "/sccexp/twitter_balance/minlabel");
-        scc_minGDecom("/sccexp/twitter_balance/minlabel", "/sccexp/twitter_balance/output4");
+    pregel_owcty("/sccexp/twitter_balance/output3", "/sccexp/twitter_balance/owcty");
+    scc_minlabel("/sccexp/twitter_balance/owcty", "/sccexp/twitter_balance/minlabel");
+    scc_minGDecom("/sccexp/twitter_balance/minlabel", "/sccexp/twitter_balance/output4");
     */
 }
 
@@ -217,41 +217,41 @@ void LJ()
     scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
     scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output2");
     /*
-        if(_my_rank == 0)
-            cout << "Third Round" << endl;
+       if(_my_rank == 0)
+       cout << "Third Round" << endl;
 
-        pregel_owcty("/sccexp/LJ/output2", "/sccexp/LJ/owcty");
-        scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
-        scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output3");
+       pregel_owcty("/sccexp/LJ/output2", "/sccexp/LJ/owcty");
+       scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
+       scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output3");
 
-        if(_my_rank == 0)
-            cout << "Forth Round" << endl;
+       if(_my_rank == 0)
+       cout << "Forth Round" << endl;
 
-        pregel_owcty("/sccexp/LJ/output3", "/sccexp/LJ/owcty");
-        scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
-        scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output4");
+       pregel_owcty("/sccexp/LJ/output3", "/sccexp/LJ/owcty");
+       scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
+       scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output4");
 
-         if(_my_rank == 0)
-            cout << "Fifth Round" << endl;
+       if(_my_rank == 0)
+       cout << "Fifth Round" << endl;
 
-        pregel_owcty("/sccexp/LJ/output4", "/sccexp/LJ/owcty");
-        scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
-        scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output5");
+       pregel_owcty("/sccexp/LJ/output4", "/sccexp/LJ/owcty");
+       scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
+       scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output5");
 
-        if(_my_rank == 0)
-            cout << "Sixth Round" << endl;
+       if(_my_rank == 0)
+       cout << "Sixth Round" << endl;
 
-        pregel_owcty("/sccexp/LJ/output5", "/sccexp/LJ/owcty");
-        scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
-        scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output6");
+       pregel_owcty("/sccexp/LJ/output5", "/sccexp/LJ/owcty");
+       scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
+       scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output6");
 
-        if(_my_rank == 0)
-            cout << "Seventh Round" << endl;
+       if(_my_rank == 0)
+       cout << "Seventh Round" << endl;
 
-        pregel_owcty("/sccexp/LJ/output6", "/sccexp/LJ/owcty");
-        scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
-        scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output7");
-        */
+       pregel_owcty("/sccexp/LJ/output6", "/sccexp/LJ/owcty");
+       scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
+       scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output7");
+       */
 }
 
 void LJ_balance()
@@ -270,69 +270,76 @@ void LJ_balance()
     scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
     scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output2");
     /*
-        if(_my_rank == 0)
-            cout << "Third Round" << endl;
+       if(_my_rank == 0)
+       cout << "Third Round" << endl;
 
-        pregel_owcty("/sccexp/LJ_balance/output2", "/sccexp/LJ_balance/owcty");
-        scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
-        scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output3");
+       pregel_owcty("/sccexp/LJ_balance/output2", "/sccexp/LJ_balance/owcty");
+       scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
+       scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output3");
 
-        if(_my_rank == 0)
-            cout << "Forth Round" << endl;
+       if(_my_rank == 0)
+       cout << "Forth Round" << endl;
 
-        pregel_owcty("/sccexp/LJ_balance/output3", "/sccexp/LJ_balance/owcty");
-        scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
-        scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output4");
+       pregel_owcty("/sccexp/LJ_balance/output3", "/sccexp/LJ_balance/owcty");
+       scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
+       scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output4");
 
-         if(_my_rank == 0)
-            cout << "Fifth Round" << endl;
+       if(_my_rank == 0)
+       cout << "Fifth Round" << endl;
 
-        pregel_owcty("/sccexp/LJ_balance/output4", "/sccexp/LJ_balance/owcty");
-        scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
-        scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output5");
+       pregel_owcty("/sccexp/LJ_balance/output4", "/sccexp/LJ_balance/owcty");
+       scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
+       scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output5");
 
-        if(_my_rank == 0)
-            cout << "Sixth Round" << endl;
+       if(_my_rank == 0)
+       cout << "Sixth Round" << endl;
 
-        pregel_owcty("/sccexp/LJ_balance/output5", "/sccexp/LJ_balance/owcty");
-        scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
-        scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output6");
+       pregel_owcty("/sccexp/LJ_balance/output5", "/sccexp/LJ_balance/owcty");
+       scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
+       scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output6");
 
-        if(_my_rank == 0)
-            cout << "Seventh Round" << endl;
+       if(_my_rank == 0)
+       cout << "Seventh Round" << endl;
 
-        pregel_owcty("/sccexp/LJ_balance/output6", "/sccexp/LJ_balance/owcty");
-        scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
-        scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output7");
-        */
+       pregel_owcty("/sccexp/LJ_balance/output6", "/sccexp/LJ_balance/owcty");
+       scc_minlabel("/sccexp/LJ_balance/owcty", "/sccexp/LJ_balance/minlabel");
+       scc_minGDecom("/sccexp/LJ_balance/minlabel", "/sccexp/LJ_balance/output7");
+       */
 }
 
 int main(int argc, char* argv[])
 {
     init_workers();
 
-    /*
     if(_my_rank == 0)
         cout << "Twitter SCC" << endl;
-    multi_twitter();
+    twitter_balance();
 
-    if(_my_rank == 0)
-        cout << "Twitter Balance SCC" << endl;
-    multi_twitter_balance();
-    */
-/*
-    if (_my_rank == 0)
-        cout << "LJ SCC" << endl;
-    multi_LJ();
-*/
+
+
+
     /*
-    if(_my_rank == 0)
-        cout << "LJ Balance SCC" << endl;
-    multi_LJ_balance();
-    */
-    
+       if(_my_rank == 0)
+       cout << "Twitter SCC" << endl;
+       multi_twitter();
+
+       if(_my_rank == 0)
+       cout << "Twitter Balance SCC" << endl;
+       multi_twitter_balance();
+       */
+    /*
+       if (_my_rank == 0)
+       cout << "LJ SCC" << endl;
+       multi_LJ();
+       */
+    /*
+       if(_my_rank == 0)
+       cout << "LJ Balance SCC" << endl;
+       multi_LJ_balance();
+       */
+
     //pregel_tosccgraphformat("/pullgel/twitter","/scc/twitter");
-    pregel_tosccgraphformat("/pullgel/twitter_balance","/scc/twitter_balance");
+    //pregel_tosccgraphformat("/pullgel/twitter_balance","/scc/twitter_balance");
     //pregel_tosccgraphformat("/pullgel/LJ","/scc/LJ");
     //pregel_tosccgraphformat("/pullgel/LJ_balance","/scc/LJ_balance");
 
