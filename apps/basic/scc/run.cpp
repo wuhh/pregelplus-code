@@ -320,22 +320,21 @@ int main(int argc, char* argv[])
         cout << "Twitter Balance SCC" << endl;
     multi_twitter_balance();
     */
-
+/*
     if (_my_rank == 0)
         cout << "LJ SCC" << endl;
     multi_LJ();
-
+*/
     /*
     if(_my_rank == 0)
         cout << "LJ Balance SCC" << endl;
     multi_LJ_balance();
     */
-    /*
-    pregel_tosccgraphformat("/pullgel/twitter","/scc/twitter");
+    
+    //pregel_tosccgraphformat("/pullgel/twitter","/scc/twitter");
     pregel_tosccgraphformat("/pullgel/twitter_balance","/scc/twitter_balance");
-    pregel_tosccgraphformat("/pullgel/LJ","/scc/LJ");
-    pregel_tosccgraphformat("/pullgel/LJ_balance","/scc/LJ_balance");
-    */
+    //pregel_tosccgraphformat("/pullgel/LJ","/scc/LJ");
+    //pregel_tosccgraphformat("/pullgel/LJ_balance","/scc/LJ_balance");
 
     worker_finalize();
     return 0;

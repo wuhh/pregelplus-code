@@ -3,8 +3,8 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    bool directed = false;
-    pregel_fieldbcast("/toyFolder", "/toyOutput", directed);
+    bool directed = true;
+    pregel_fieldbcast("/ldg/webbase", "/req/webbase", directed);
     worker_finalize();
     return 0;
 }

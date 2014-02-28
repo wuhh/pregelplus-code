@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
     print(argv[1]);
     print("ppa_hashmin");
     ppa_hashmin(argv[1], "/ppa/hashmin_ppa", true);
-
     print("ppa_spantree");
     ppa_spantree("/ppa/hashmin_ppa", "/ppa/spantree_ppa", true);
 

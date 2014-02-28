@@ -137,7 +137,11 @@ public:
             v->value().dist = DBL_MAX;
             v->vote_to_halt();
         }
-        while (pch = strtok(NULL, " ")) {
+        pch = strtok(NULL, " ");
+        int num = atoi(pch);
+        for(int i = 0 ;i < num ; i ++)
+        {
+            pch = strtok(NULL, " ");
             int nb = atoi(pch);
             pch = strtok(NULL, " ");
             double len = atof(pch);
