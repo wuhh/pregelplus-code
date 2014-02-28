@@ -1,7 +1,8 @@
 #include "basic/pregel-dev.h"
 using namespace std;
 
-int src = 0;
+int src = 44881114;
+
 int dst = -1;
 
 struct ReachValue {
@@ -91,12 +92,14 @@ public:
         ReachVertex* v = new ReachVertex;
         v->id = atoi(pch);
         vector<VertexID>& in_edges = v->value().in_edges;
+        /*
         pch = strtok(NULL, " ");
         int indegree = atoi(pch);
         for (int i = 0; i < indegree; i++) {
             pch = strtok(NULL, " ");
             in_edges.push_back(atoi(pch));
         }
+        */
         vector<VertexID>& out_edges = v->value().out_edges;
         pch = strtok(NULL, " ");
         int outdegree = atoi(pch);
