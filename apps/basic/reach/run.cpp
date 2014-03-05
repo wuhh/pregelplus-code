@@ -3,7 +3,7 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_reach("/pullgel/webuk", "/exp/reach", true);
+    pregel_reach("/pullgel/livej", "/exp/reach", true);
     worker_finalize();
     return 0;
 }

@@ -1,7 +1,8 @@
 #include "basic/pregel-dev.h"
 using namespace std;
 
-int src = 44881114;
+//int src = 44881114;
+int src = 0;
 
 int dst = -1;
 
