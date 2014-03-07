@@ -104,7 +104,7 @@ void twitter()
     pregel_owcty("/sccexp/twitter/output1", "/sccexp/twitter/owcty");
     scc_minlabel("/sccexp/twitter/owcty", "/sccexp/twitter/minlabel");
     scc_minGDecom("/sccexp/twitter/minlabel", "/sccexp/twitter/output2");
-/*
+    /*
     if(_my_rank == 0)
         cout << "Third Round" << endl;
 
@@ -136,7 +136,7 @@ void LJ()
     pregel_owcty("/sccexp/LJ/output1", "/sccexp/LJ/owcty");
     scc_minlabel("/sccexp/LJ/owcty", "/sccexp/LJ/minlabel");
     scc_minGDecom("/sccexp/LJ/minlabel", "/sccexp/LJ/output2");
-  /*
+    /*
   if(_my_rank == 0)
         cout << "Third Round" << endl;
 
@@ -174,13 +174,11 @@ void LJ()
     */
 }
 
-
 int main(int argc, char* argv[])
 {
     init_workers();
 
-
-    if(_my_rank == 0)
+    if (_my_rank == 0)
         cout << "Twitter SCC" << endl;
     twitter();
 

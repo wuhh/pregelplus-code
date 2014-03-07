@@ -139,8 +139,7 @@ public:
         }
         pch = strtok(NULL, " ");
         int num = atoi(pch);
-        for(int i = 0 ;i < num ; i ++)
-        {
+        for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             int nb = atoi(pch);
             pch = strtok(NULL, " ");

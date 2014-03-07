@@ -1,6 +1,5 @@
 #include "pregel_app_approxdiameter.h"
 
-
 int main(int argc, char* argv[])
 {
     init_workers();

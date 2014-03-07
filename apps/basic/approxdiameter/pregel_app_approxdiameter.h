@@ -12,8 +12,7 @@ double myrand()
 size_t hash_value()
 {
     size_t ret = 0;
-    while (myrand() < 0.5)
-    {
+    while (myrand() < 0.5) {
         ret++;
     }
     return ret;
@@ -22,20 +21,21 @@ size_t hash_value()
 const size_t DUPULICATION_OF_BITMASKS = 10;
 const double termination_criteria = 0.0001;
 
-struct ApproxdiameterValue
-{
+struct ApproxdiameterValue {
     //use two bitmasks for consistency
     std::vector<int> bitmask;
     std::vector<VertexID> edges;
     size_t last_approximate_pair_number;
 
-    ApproxdiameterValue() : bitmask(), last_approximate_pair_number(0)
-    {}
+    ApproxdiameterValue()
+        : bitmask()
+        , last_approximate_pair_number(0)
+    {
+    }
     //for approximate Flajolet & Martin counting
     void create_hashed_bitmask(size_t id)
     {
-        for (size_t i = 0; i < DUPULICATION_OF_BITMASKS; ++i)
-        {
+        for (size_t i = 0; i < DUPULICATION_OF_BITMASKS; ++i) {
             size_t hash_val = hash_value();
             int mask = 1 << hash_val;
             bitmask.push_back(mask);
@@ -45,12 +45,10 @@ struct ApproxdiameterValue
 void bitwise_or(std::vector<int>& v1,
                 const std::vector<int>& v2)
 {
-    for (size_t a = 0; a < v1.size(); ++a)
-    {
-    	v1[a] |= v2[a];
+    for (size_t a = 0; a < v1.size(); ++a) {
+        v1[a] |= v2[a];
     }
 }
-
 
 ibinstream& operator<<(ibinstream& m, const ApproxdiameterValue& v)
 {
@@ -70,16 +68,14 @@ obinstream& operator>>(obinstream& m, ApproxdiameterValue& v)
 
 //====================================
 
-class ApproxdiameterVertex : public Vertex<VertexID, ApproxdiameterValue, std::vector<int> >
-{
+class ApproxdiameterVertex : public Vertex<VertexID, ApproxdiameterValue, std::vector<int> > {
 public:
     virtual void compute(MessageContainer& messages)
     {
-        if(step_num() >= 2) // 1 send msg, 2, 1-hop statistics
+        if (step_num() >= 2) // 1 send msg, 2, 1-hop statistics
         {
-            size_t* agg=((size_t*)getAgg());
-            if(*agg <  value().last_approximate_pair_number  * (1.0 + termination_criteria) )
-            {
+            size_t* agg = ((size_t*)getAgg());
+            if (*agg < value().last_approximate_pair_number * (1.0 + termination_criteria)) {
                 vote_to_halt();
                 return;
             }
@@ -87,41 +83,35 @@ public:
         }
 
         std::vector<int>& bitmask = value().bitmask;
-        for(int i = 0 ; i < messages.size() ; i ++)
-        {
+        for (int i = 0; i < messages.size(); i++) {
             bitwise_or(bitmask, messages[i]);
         }
-        const std::vector<VertexID> &edges = value().edges;
-        for(int i = 0 ;i < edges.size() ; i ++)
-        {
+        const std::vector<VertexID>& edges = value().edges;
+        for (int i = 0; i < edges.size(); i++) {
             send_message(edges[i], bitmask);
         }
     }
-}
-;
+};
 
 //count the number of vertices reached in the current hop with Flajolet & Martin counting method
-size_t approximate_pair_number(const std::vector<int>&  bitmask)
+size_t approximate_pair_number(const std::vector<int>& bitmask)
 {
     double sum = 0.0;
-    for (size_t a = 0; a < bitmask.size(); ++a)
-    {
-        for (size_t i = 0; i < 32; ++i)
-        {
-            if ((bitmask[a] & (1 << i)) == 0)
-            {
-                sum += (double) i;
+    for (size_t a = 0; a < bitmask.size(); ++a) {
+        for (size_t i = 0; i < 32; ++i) {
+            if ((bitmask[a] & (1 << i)) == 0) {
+                sum += (double)i;
                 break;
             }
         }
     }
-    return (size_t) (pow(2.0, sum / (double) (bitmask.size())) / 0.77351);
+    return (size_t)(pow(2.0, sum / (double)(bitmask.size())) / 0.77351);
 }
 
-class ApproxdiameterAgg : public Aggregator<ApproxdiameterVertex, size_t , size_t>
-{
+class ApproxdiameterAgg : public Aggregator<ApproxdiameterVertex, size_t, size_t> {
 private:
     size_t pair_sum;
+
 public:
     virtual void init()
     {
@@ -144,17 +134,14 @@ public:
     }
     virtual size_t* finishFinal()
     {
-    	if( step_num() >= 2)
-    	{
-    		cout << "Approximate pairs number in "<< step_num() - 1  << " hop : " << pair_sum << endl;
-    	}
+        if (step_num() >= 2) {
+            cout << "Approximate pairs number in " << step_num() - 1 << " hop : " << pair_sum << endl;
+        }
         return &pair_sum;
     }
-}
-;
+};
 
-class ApproxdiameterWorker : public Worker<ApproxdiameterVertex, ApproxdiameterAgg>
-{
+class ApproxdiameterWorker : public Worker<ApproxdiameterVertex, ApproxdiameterAgg> {
     char buf[100];
 
 public:
@@ -166,8 +153,7 @@ public:
         v->id = atoi(pch);
         pch = strtok(NULL, " ");
         int num = atoi(pch);
-        for (int i = 0; i < num; i++)
-        {
+        for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             v->value().edges.push_back(atoi(pch));
         }
@@ -176,23 +162,21 @@ public:
     }
 
     virtual void toline(ApproxdiameterVertex* v, BufferedWriter& writer)
-    {}
-}
-;
+    {
+    }
+};
 
-
-class ApproxdiameterCombiner : public Combiner<std::vector<int > >
-{
+class ApproxdiameterCombiner : public Combiner<std::vector<int> > {
 public:
     virtual void combine(std::vector<int>& old, const std::vector<int>& new_msg)
     {
-        bitwise_or(old,new_msg);
+        bitwise_or(old, new_msg);
     }
 };
 
 void pregel_approxdiameter(string in_path, string out_path, bool use_combiner)
 {
-	srand(time(0));
+    srand(time(0));
     WorkerParams param;
     param.input_path = in_path;
     param.output_path = out_path;
@@ -205,8 +189,7 @@ void pregel_approxdiameter(string in_path, string out_path, bool use_combiner)
     ApproxdiameterAgg agg;
     worker.setAggregator(&agg);
     worker.run(param);
-    if(_my_rank == 0)
-    {
-    	cout << "The diameter is : " << step_num() - 3 << endl;
+    if (_my_rank == 0) {
+        cout << "The diameter is : " << step_num() - 3 << endl;
     }
 }

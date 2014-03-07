@@ -2,13 +2,11 @@
 #include <cmath>
 using namespace std;
 
-struct BipartiteMatchingValue
-{
+struct BipartiteMatchingValue {
     int left;
     int matchTo;
     std::vector<VertexID> edges;
 };
-
 
 ibinstream& operator<<(ibinstream& m, const BipartiteMatchingValue& v)
 {
@@ -28,64 +26,49 @@ obinstream& operator>>(obinstream& m, BipartiteMatchingValue& v)
 
 //====================================
 
-class BipartiteMatchingVertex : public Vertex<VertexID, BipartiteMatchingValue, int >
-{
+class BipartiteMatchingVertex : public Vertex<VertexID, BipartiteMatchingValue, int> {
 public:
     virtual void compute(MessageContainer& messages)
     {
         std::vector<VertexID>& edges = value().edges;
-        if(step_num() % 4 == 1)
-        {
-            if(value().left == 1 && value().matchTo == -1) // left not matched
+        if (step_num() % 4 == 1) {
+            if (value().left == 1 && value().matchTo == -1) // left not matched
             {
-                for(int i = 0; i < edges.size() ; i ++)
-                {
+                for (int i = 0; i < edges.size(); i++) {
                     send_message(edges[i], id); // request
                 }
             }
             vote_to_halt();
-        }
-        else if(step_num() % 4 == 2)
-        {
-            if(value().left == 0 && value().matchTo == -1) //right  not matched
+        } else if (step_num() % 4 == 2) {
+            if (value().left == 0 && value().matchTo == -1) //right  not matched
             {
-                if( messages.size() > 0 )
-                {
-                    send_message(messages[0] , id); // ask for granting
+                if (messages.size() > 0) {
+                    send_message(messages[0], id); // ask for granting
                 }
             }
             vote_to_halt();
-        }
-        else if(step_num() % 4 == 3)
-        {
-            if(value().left == 1 && value().matchTo == -1) // left not matched
+        } else if (step_num() % 4 == 3) {
+            if (value().left == 1 && value().matchTo == -1) // left not matched
             {
-                if( messages.size() > 0 )
-                {
+                if (messages.size() > 0) {
                     value().matchTo = messages[0];
-                    send_message(messages[0] , id); // grant
+                    send_message(messages[0], id); // grant
                 }
             }
             vote_to_halt();
-        }
-        else if(step_num() % 4 == 0)
-        {
-            if(value().left == 0 && value().matchTo == -1) //right  not matched
+        } else if (step_num() % 4 == 0) {
+            if (value().left == 0 && value().matchTo == -1) //right  not matched
             {
-                if( messages.size() == 1 )
-                {
-                	 value().matchTo = messages[0]; // update
+                if (messages.size() == 1) {
+                    value().matchTo = messages[0]; // update
                 }
             }
             vote_to_halt();
         }
     }
-}
-;
+};
 
-
-class BipartiteMatchingWorker : public Worker<BipartiteMatchingVertex>
-{
+class BipartiteMatchingWorker : public Worker<BipartiteMatchingVertex> {
     char buf[100];
 
 public:
@@ -100,8 +83,7 @@ public:
         v->value().left = atoi(pch);
         pch = strtok(NULL, " ");
         int num = atoi(pch);
-        for (int i = 0; i < num; i++)
-        {
+        for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             v->value().edges.push_back(atoi(pch));
         }
@@ -112,7 +94,7 @@ public:
 
     virtual void toline(BipartiteMatchingVertex* v, BufferedWriter& writer)
     {
-        sprintf(buf, "%d\t%d\n", v->id , v->value().matchTo);
+        sprintf(buf, "%d\t%d\n", v->id, v->value().matchTo);
         writer.write(buf);
     }
 };
