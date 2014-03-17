@@ -1,6 +1,7 @@
 package org.apache.giraph.examples;
 
 import org.apache.giraph.edge.Edge;
+import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.Vertex;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -72,7 +73,7 @@ public class Color extends
 	    }
 	    for (Edge<IntWritable, NullWritable> e : this.getEdges()) {
 		if (m.contains(e) == false)
-		    new_nbs.add(e);
+		    new_nbs.add(EdgeFactory.create(e.getTargetVertexId()));
 	    }
 	    setEdges(new_nbs);
 	}
