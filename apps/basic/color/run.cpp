@@ -1,8 +1,9 @@
-#include "pregel_app_sssp.h"
+#include "pregel_app_color.h"
+
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_sssp(0, "/pullgel/usa", "/exp/usa/sssp_out", true);
+    pregel_color("/pullgel/livej", "/exp/color_out");
     worker_finalize();
     return 0;
 }

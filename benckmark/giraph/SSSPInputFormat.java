@@ -24,13 +24,13 @@ public class SSSPInputFormat extends
     @Override
     public TextVertexReader createVertexReader(InputSplit split,
 	    TaskAttemptContext context) throws IOException {
-	return new IntIntNullVertexReader();
+	return new SSSPVertexReader();
     }
 
     /**
      * Vertex reader associated with {@link IntIntNullTextInputFormat}.
      */
-    public class IntIntNullVertexReader extends
+    public class SSSPVertexReader extends
 	    TextVertexReaderFromEachLineProcessed<String[]> {
 
 	private IntWritable id;

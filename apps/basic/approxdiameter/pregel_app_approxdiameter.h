@@ -1,7 +1,7 @@
 #include "basic/pregel-dev.h"
 #include <cmath>
 using namespace std;
-
+int DIAMETER = 13;
 //helper function
 double myrand()
 {
@@ -25,11 +25,9 @@ struct ApproxdiameterValue {
     //use two bitmasks for consistency
     std::vector<int> bitmask;
     std::vector<VertexID> edges;
-    size_t last_approximate_pair_number;
 
     ApproxdiameterValue()
         : bitmask()
-        , last_approximate_pair_number(0)
     {
     }
     //for approximate Flajolet & Martin counting
@@ -54,7 +52,6 @@ ibinstream& operator<<(ibinstream& m, const ApproxdiameterValue& v)
 {
     m << v.bitmask;
     m << v.edges;
-    m << v.last_approximate_pair_number;
     return m;
 }
 
@@ -62,7 +59,6 @@ obinstream& operator>>(obinstream& m, ApproxdiameterValue& v)
 {
     m >> v.bitmask;
     m >> v.edges;
-    m >> v.last_approximate_pair_number;
     return m;
 }
 
@@ -72,14 +68,10 @@ class ApproxdiameterVertex : public Vertex<VertexID, ApproxdiameterValue, std::v
 public:
     virtual void compute(MessageContainer& messages)
     {
-        if (step_num() >= 2) // 1 send msg, 2, 1-hop statistics
+        if (step_num() > DIAMETER)
         {
-            size_t* agg = ((size_t*)getAgg());
-            if (*agg < value().last_approximate_pair_number * (1.0 + termination_criteria)) {
-                vote_to_halt();
-                return;
-            }
-            value().last_approximate_pair_number = *agg;
+            vote_to_halt();
+            return;
         }
 
         std::vector<int>& bitmask = value().bitmask;
@@ -111,11 +103,19 @@ size_t approximate_pair_number(const std::vector<int>& bitmask)
 class ApproxdiameterAgg : public Aggregator<ApproxdiameterVertex, size_t, size_t> {
 private:
     size_t pair_sum;
-
+    size_t last_sum;
 public:
     virtual void init()
     {
         pair_sum = 0;
+        if(step_num() == 1)
+        {
+        	last_sum = 0;
+        }
+        else
+        {
+        	last_sum = *(size_t*)getAgg();
+        }
     }
 
     virtual void stepPartial(ApproxdiameterVertex* v)
@@ -134,9 +134,12 @@ public:
     }
     virtual size_t* finishFinal()
     {
-        if (step_num() >= 2) {
-            cout << "Approximate pairs number in " << step_num() - 1 << " hop : " << pair_sum << endl;
-        }
+    	if(step_num() > 1)
+    	{
+    		if(pair_sum < last_sum * (1.0 + termination_criteria))
+    			;//DIAMETER = step_num();
+    		cout << "Approximate pairs number in " << step_num() - 1 << " hop : " << pair_sum << endl;
+    	}
         return &pair_sum;
     }
 };
