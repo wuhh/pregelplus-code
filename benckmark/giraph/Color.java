@@ -72,7 +72,7 @@ public class Color extends
 		m.add(msg.get());
 	    }
 	    for (Edge<IntWritable, NullWritable> e : this.getEdges()) {
-		if (m.contains(e) == false)
+		if (m.contains(e.getTargetVertexId().get()) == false)
 		    new_nbs.add(EdgeFactory.create(e.getTargetVertexId()));
 	    }
 	    setEdges(new_nbs);
