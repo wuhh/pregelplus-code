@@ -41,7 +41,7 @@ public class Color extends
 
 	    if (selected) {
 		setValue(new IntWritable(-2));
-		sendMessageToAllEdges(getValue());
+		sendMessageToAllEdges(getId());
 	    }
 
 	} else if (getSuperstep() % 3 == 2) {
