@@ -56,11 +56,18 @@ public class ColorInputFormat extends
 	@Override
 	protected Iterable<Edge<IntWritable, NullWritable>> getEdges(
 		String[] tokens) throws IOException {
-	    List<Edge<IntWritable, NullWritable>> edges = Lists
-		    .newArrayListWithCapacity(tokens.length - 2);
+	    int vid = Integer.parseInt(tokens[0]);
+	    int count = 0;
 	    for (int n = 2; n < tokens.length; n++) {
-		edges.add(EdgeFactory.create(new IntWritable(Integer
-			.parseInt(tokens[n]))));
+		if (Integer.parseInt(tokens[n]) != vid)
+		    count++;
+	    }
+	    List<Edge<IntWritable, NullWritable>> edges = Lists
+		    .newArrayListWithCapacity(count);
+	    for (int n = 2; n < tokens.length; n++) {
+		if (Integer.parseInt(tokens[n]) != vid)
+		    edges.add(EdgeFactory.create(new IntWritable(Integer
+			    .parseInt(tokens[n]))));
 	    }
 	    return edges;
 	}
