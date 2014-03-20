@@ -42,19 +42,20 @@ public class PagerankVertex extends
 		int numVertices = ((IntSumGlobalObject) getGlobalObjectsMap()
 				.getGlobalObject(GlobalObjectsMap.NUM_TOTAL_VERTICES))
 				.getValue().getValue();
+		double PRValue = 0;
 		if (superstepNo == 1) {
 			setValue(new DoubleWritable(1.0 / numVertices));
-			return;
 		}
-
-		double sum = 0;
-		for (DoubleWritable msg : messageValues) {
-			sum += msg.getValue();
+		else
+		{
+			double sum = 0;
+			for (DoubleWritable msg : messageValues) {
+				sum += msg.getValue();
+			}
+			PRValue = 0.15 / numVertices + 0.85 * sum;
+			setValue(new DoubleWritable(PRValue));
 		}
-		double PRValue = 0.15 / numVertices + 0.85 * sum;
-		setValue(new DoubleWritable(PRValue));
-
-		if (superstepNo < ROUND) {
+		if (superstepNo <= ROUND) {
 			sendMessages(getNeighborIds(), new DoubleWritable(PRValue
 					/ getNeighborsSize()));
 		} else {

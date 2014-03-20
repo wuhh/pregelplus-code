@@ -48,7 +48,7 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
 	    int id = getId();
 	    int min = id;
 	    for (IntWritable msg : messageValues) {
-		min = Math.max(min, msg.getValue());
+		min = Math.min(min, msg.getValue());
 	    }
 	    if (min < id) {
 		setValue(new IntWritable(-1));
@@ -56,7 +56,6 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
 		setValue(new IntWritable(superstepNo / 3));
 		sendMessages(getNeighborIds(),new IntWritable(getId()));
 		voteToHalt();
-		removeEdges();
 	    }
 	} else if (superstepNo % 3 == 0) {
 
@@ -72,8 +71,11 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
 	    int[] nbs = new int[count];
 	    count = 0;
 	    for (int e : this.getNeighborIds()) {
-		nbs[count] = e;
-		count += 1;
+		if (m.contains(e) == false)
+		{
+		    nbs[count] = e;
+		    count += 1;
+		}
 	    }
 	    this.removeEdges();
 	    this.addEdges(nbs, new NullWritable[nbs.length]);

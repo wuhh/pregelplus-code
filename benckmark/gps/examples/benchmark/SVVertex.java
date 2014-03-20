@@ -25,8 +25,7 @@ public class SVVertex extends NullEdgeVertex<SVWritable, IntWritable> {
 
 	int D = getValue().getD();
 	boolean star = getValue().getStar();
-	for (Edge<NullWritable> edge : getOutgoingEdges()) {
-	    int nb = edge.getNeighborId();
+	for (int nb : getNeighborIds()) {
 	    if (nb < D) {
 		D = nb;
 	    }
@@ -48,8 +47,8 @@ public class SVVertex extends NullEdgeVertex<SVWritable, IntWritable> {
 
     private void rtHook_2S() {
 	int Dv = getValue().getD();
-	for (Edge<NullWritable> edge : getOutgoingEdges()) {
-	    sendMessage(edge.getNeighborId(), new IntWritable(-Dv - 1));
+	for (int nb : getNeighborIds()) {
+	    sendMessage(nb, new IntWritable(-Dv - 1));
 	}
     }
 
@@ -275,9 +274,11 @@ public class SVVertex extends NullEdgeVertex<SVWritable, IntWritable> {
 
 	@Override
 	public Class<?> getVertexValueClass() {
-	    return IntWritable.class;
+	    return SVWritable.class;
 	}
-
+	public Class<?> getMasterClass() {
+		return SVMaster.class;
+	}
 	@Override
 	public Class<?> getMessageValueClass() {
 	    return IntWritable.class;

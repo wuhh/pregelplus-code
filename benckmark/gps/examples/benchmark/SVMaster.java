@@ -1,4 +1,6 @@
 package gps.examples.benchmark;
+import org.apache.commons.cli.CommandLine;
+
 import gps.globalobjects.BooleanANDGlobalObject;
 import gps.graph.Master;
 
@@ -11,6 +13,10 @@ import gps.graph.Master;
  * @author semihsalihoglu
  */
 public class SVMaster extends Master {
+    public SVMaster(CommandLine line) {
+	java.util.HashMap<String, String> arg_map = new java.util.HashMap<String, String>();
+	gps.node.Utils.parseOtherOptions(line, arg_map);
+    }
     @Override
     public void compute(int superstepNo) {	
 	getGlobalObjectsMap().clearNonDefaultObjects();
