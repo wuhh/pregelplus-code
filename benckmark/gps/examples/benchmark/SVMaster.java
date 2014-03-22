@@ -3,6 +3,7 @@ import org.apache.commons.cli.CommandLine;
 
 import gps.globalobjects.BooleanANDGlobalObject;
 import gps.graph.Master;
+import gps.writable.BooleanWritable;
 
 
 /**
@@ -19,8 +20,18 @@ public class SVMaster extends Master {
     }
     @Override
     public void compute(int superstepNo) {	
+	int cycle = 14;
+	if(superstepNo % cycle == 3)
+	{
+	    boolean star = ((BooleanWritable) getGlobalObjectsMap()
+		    .getGlobalObject("Star").getValue()).getValue();
+	    if(star)
+	    {
+		this.terminateComputation();
+	    }
+	}
 	getGlobalObjectsMap().clearNonDefaultObjects();
-	getGlobalObjectsMap().putGlobalObject("Star", new BooleanANDGlobalObject(false));
+	getGlobalObjectsMap().putGlobalObject("Star", new BooleanANDGlobalObject(true));
 	
     }
 

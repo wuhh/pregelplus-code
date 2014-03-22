@@ -188,54 +188,51 @@ public class SVVertex extends NullEdgeVertex<SVWritable, IntWritable> {
 
     @Override
     public void compute(Iterable<IntWritable> messageValues, int superstepNo) {
-	int cycle = 14;
-	if (superstepNo == 1) {
+	int cycle = 14;	
+	if(superstepNo == 1)
+	{
+	    this.setValue( new SVWritable(getId(), false));
+	    return;
+	}
+	if (superstepNo == 2) {
 	    treeInit_D();
 	    rtHook_1S();
-	} else if (superstepNo % cycle == 2) {
-	    boolean star = ((BooleanWritable) getGlobalObjectsMap()
-		    .getGlobalObject("Star").getValue()).getValue();
-	    if (star) {
-		voteToHalt();
-
-		return;
-	    }
+	} else if (superstepNo % cycle == 3) {
 	    rtHook_2R(messageValues);
 	    rtHook_2S();
-	} else if (superstepNo % cycle == 3) {
-	    rtHook_3GDS(messageValues);
 	} else if (superstepNo % cycle == 4) {
+	    rtHook_3GDS(messageValues);
+	} else if (superstepNo % cycle == 5) {
 	    rtHook_4GD(messageValues);
 	    setStar_1S();
-	} else if (superstepNo % cycle == 5) {
-	    setStar_2R(messageValues);
 	} else if (superstepNo % cycle == 6) {
-	    setStar_3GDS(messageValues);
+	    setStar_2R(messageValues);
 	} else if (superstepNo % cycle == 7) {
+	    setStar_3GDS(messageValues);
+	} else if (superstepNo % cycle == 8) {
 	    setStar_4GDS(messageValues);
 	    rtHook_2S();
-	} else if (superstepNo % cycle == 8) {
+	} else if (superstepNo % cycle == 9) {
 	    Vector<Integer> msgs = setStar_5GD_starhook(messageValues);
 	    starHook_3GDS(msgs);
-	} else if (superstepNo % cycle == 9) {
+	} else if (superstepNo % cycle == 10) {
 	    rtHook_4GD(messageValues);
 	    rtHook_1S();
-	} else if (superstepNo % cycle == 10) {
-	    rtHook_2R(messageValues);
 	} else if (superstepNo % cycle == 11) {
+	    rtHook_2R(messageValues);
+	} else if (superstepNo % cycle == 12) {
 	    shortcut_3GD(messageValues);
 	    setStar_1S();
-	} else if (superstepNo % cycle == 12) {
-	    setStar_2R(messageValues);
 	} else if (superstepNo % cycle == 13) {
-	    setStar_3GDS(messageValues);
+	    setStar_2R(messageValues);
 	} else if (superstepNo % cycle == 0) {
-	    setStar_4GDS(messageValues);
+	    setStar_3GDS(messageValues);
 	} else if (superstepNo % cycle == 1) {
+	    setStar_4GDS(messageValues);
+	} else if (superstepNo % cycle == 2) {
 	    setStar_5GD(messageValues);
 	    rtHook_1S();
 	}
-
 	getGlobalObjectsMap().putOrUpdateGlobalObject("Star",
 		new BooleanANDGlobalObject(getValue().getStar()));
     }

@@ -214,6 +214,7 @@ class SVVertex_pregel : public Vertex<int, SVValue_pregel, int> {
 public:
     virtual void compute(MessageContainer& messages)
     {
+        cout << id << " : " << value().D << " " << value().star << endl;
         int cycle = 14;
         if (step_num() == 1) {
             treeInit_D();
