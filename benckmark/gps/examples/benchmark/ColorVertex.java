@@ -1,8 +1,9 @@
 package gps.examples.benchmark;
 
-
+import java.util.Arrays;
 import java.util.Random;
 import java.util.TreeSet;
+
 
 import org.apache.commons.cli.CommandLine;
 
@@ -11,7 +12,6 @@ import gps.graph.NullEdgeVertex;
 import gps.graph.NullEdgeVertexFactory;
 import gps.node.GPSJobConfiguration;
 import gps.writable.IntWritable;
-import gps.writable.NullWritable;
 
 public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
     public ColorVertex(CommandLine line) {
@@ -23,10 +23,22 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
     public double myrand() {
 	return rand.nextDouble();
     }
+    void sendToAllnbs(int value)
+    {	
+	int ids[] = getNeighborIds();
+	for(int i = 0 ;i < getNeighborsSize() ; i ++)
+	{
+	    sendMessage(ids[i], new IntWritable(value));
+	}
+    }
     @Override
     public void compute(Iterable<IntWritable> messageValues, int superstepNo) {
-
-	if (superstepNo % 3 == 1) {
+	if (superstepNo == 1)
+	{
+		setValue(new IntWritable(-1));
+		return;
+	}
+	if (superstepNo % 3 == 2) {
 
 	    int degree = getNeighborsSize();
 	    boolean selected;
@@ -38,47 +50,42 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
 
 	    if (selected) {
 		setValue(new IntWritable(-2));
-		sendMessages(getNeighborIds(),new IntWritable(getId()));
+		sendToAllnbs(getId());
 	    }
 
-	} else if (superstepNo % 3 == 2) {
+	} else if (superstepNo % 3 == 0) {
 	    if (getValue().getValue() == -1) {
 		return;
 	    }
 	    int id = getId();
 	    int min = id;
+
 	    for (IntWritable msg : messageValues) {
 		min = Math.min(min, msg.getValue());
 	    }
+	    System.out.println();
 	    if (min < id) {
 		setValue(new IntWritable(-1));
 	    } else {
 		setValue(new IntWritable(superstepNo / 3));
-		sendMessages(getNeighborIds(),new IntWritable(getId()));
+		sendToAllnbs(getId());
 		voteToHalt();
 	    }
-	} else if (superstepNo % 3 == 0) {
-
+	} else if (superstepNo % 3 == 1) {
+	    
 	    TreeSet<Integer> m = new TreeSet<Integer>();
 	    for (IntWritable msg : messageValues) {
 		m.add(msg.getValue());
 	    }
-	    int count = 0;
-	    for (int e : this.getNeighborIds()) {
-		if (m.contains(e) == false)
-		    count += 1;
-	    }
-	    int[] nbs = new int[count];
-	    count = 0;
-	    for (int e : this.getNeighborIds()) {
-		if (m.contains(e) == false)
+	    int old_nbs[] = Arrays.copyOf(getNeighborIds(), getNeighborsSize());    
+	    removeEdges();
+	    for(int e : old_nbs)
+	    {
+		if(m.contains(e) == false)
 		{
-		    nbs[count] = e;
-		    count += 1;
+		    addEdge(e, null);
 		}
 	    }
-	    this.removeEdges();
-	    this.addEdges(nbs, new NullWritable[nbs.length]);
 	}
     }
 
@@ -92,13 +99,13 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
      * 
      * @author Yi Lu
      */
-    public static class ColorVertexFactory extends
+    public static class GreadyColorVertexFactory extends
 	    NullEdgeVertexFactory<IntWritable, IntWritable> {
 
 	@Override
 	public NullEdgeVertex<IntWritable, IntWritable> newInstance(
 		CommandLine commandLine) {
-	    return new ConnectedComponentsVertex(commandLine);
+	    return new ColorVertex(commandLine);
 	}
     }
 
@@ -106,7 +113,7 @@ public class ColorVertex extends NullEdgeVertex<IntWritable, IntWritable> {
 
 	@Override
 	public Class<?> getVertexFactoryClass() {
-	    return ColorVertexFactory.class;
+	    return GreadyColorVertexFactory.class;
 	}
 
 	@Override
