@@ -12,7 +12,8 @@
 using namespace std;
 
 template <class VertexT, class AggregatorT = DummyAgg> //user-defined VertexT
-class Worker {
+class Worker
+{
     typedef vector<VertexT*> VertexContainer;
     typedef typename VertexContainer::iterator VertexIter;
 
@@ -73,7 +74,8 @@ public:
         //ResetTimer(4);
         //set send buffer
         vector<VertexContainer> _loaded_parts(_num_workers);
-        for (int i = 0; i < vertexes.size(); i++) {
+        for (int i = 0; i < vertexes.size(); i++)
+        {
             VertexT* v = vertexes[i];
             _loaded_parts[hash(v->id)].push_back(v);
         }
@@ -81,14 +83,16 @@ public:
         all_to_all(_loaded_parts);
 
         //delete sent vertices
-        for (int i = 0; i < vertexes.size(); i++) {
+        for (int i = 0; i < vertexes.size(); i++)
+        {
             VertexT* v = vertexes[i];
             if (hash(v->id) != _my_rank)
                 delete v;
         }
         vertexes.clear();
         //collect vertices to add
-        for (int i = 0; i < _num_workers; i++) {
+        for (int i = 0; i < _num_workers; i++)
+        {
             vertexes.insert(vertexes.end(), _loaded_parts[i].begin(), _loaded_parts[i].end());
         }
         _loaded_parts.clear();
@@ -98,69 +102,72 @@ public:
 
     //old implementation
     /*
-		void active_compute()
-		{
-			active_count=0;
-			MessageBufT* mbuf=(MessageBufT*)get_message_buffer();
-			Map & msgs=mbuf->get_messages();
-			MessageContainerT empty;
-			for(VertexIter it=vertexes.begin(); it!=vertexes.end(); it++)
-			{
-				KeyT vid=(*it)->id;
-				MapIter mit=msgs.find(vid);
-				if(mit->second->size()==0)
-				{
-					if((*it)->is_active())
-					{
-						(*it)->compute(empty);
-						AggregatorT* agg=(AggregatorT*)get_aggregator();
-						if(agg!=NULL) agg->stepPartial(*it);
-						if((*it)->is_active()) active_count++;
-					}
-				}
-				else
-				{
-					(*it)->activate();
-					(*it)->compute(*(mit->second));
-					mit->second->clear();//clear used msgs
-					AggregatorT* agg=(AggregatorT*)get_aggregator();
-					if(agg!=NULL) agg->stepPartial(*it);
-					if((*it)->is_active()) active_count++;
-				}
-			}
-		}
+    	void active_compute()
+    	{
+    		active_count=0;
+    		MessageBufT* mbuf=(MessageBufT*)get_message_buffer();
+    		Map & msgs=mbuf->get_messages();
+    		MessageContainerT empty;
+    		for(VertexIter it=vertexes.begin(); it!=vertexes.end(); it++)
+    		{
+    			KeyT vid=(*it)->id;
+    			MapIter mit=msgs.find(vid);
+    			if(mit->second->size()==0)
+    			{
+    				if((*it)->is_active())
+    				{
+    					(*it)->compute(empty);
+    					AggregatorT* agg=(AggregatorT*)get_aggregator();
+    					if(agg!=NULL) agg->stepPartial(*it);
+    					if((*it)->is_active()) active_count++;
+    				}
+    			}
+    			else
+    			{
+    				(*it)->activate();
+    				(*it)->compute(*(mit->second));
+    				mit->second->clear();//clear used msgs
+    				AggregatorT* agg=(AggregatorT*)get_aggregator();
+    				if(agg!=NULL) agg->stepPartial(*it);
+    				if((*it)->is_active()) active_count++;
+    			}
+    		}
+    	}
 
-		void all_compute()
-		{
-			active_count=0;
-			MessageBufT* mbuf=(MessageBufT*)get_message_buffer();
-			Map & msgs=mbuf->get_messages();
-			MessageContainerT empty;
-			for(VertexIter it=vertexes.begin(); it!=vertexes.end(); it++)
-			{
-				KeyT vid=(*it)->id;
-				MapIter mit=msgs.find(vid);
-				(*it)->activate();
-				if(mit->second->size()==0) (*it)->compute(empty);
-				else{
-					(*it)->compute(*(mit->second));
-					mit->second->clear();//clear used msgs
-				}
-				AggregatorT* agg=(AggregatorT*)get_aggregator();
-				if(agg!=NULL) agg->stepPartial(*it);
-				if((*it)->is_active()) active_count++;
-			}
-		}
-		*/
+    	void all_compute()
+    	{
+    		active_count=0;
+    		MessageBufT* mbuf=(MessageBufT*)get_message_buffer();
+    		Map & msgs=mbuf->get_messages();
+    		MessageContainerT empty;
+    		for(VertexIter it=vertexes.begin(); it!=vertexes.end(); it++)
+    		{
+    			KeyT vid=(*it)->id;
+    			MapIter mit=msgs.find(vid);
+    			(*it)->activate();
+    			if(mit->second->size()==0) (*it)->compute(empty);
+    			else{
+    				(*it)->compute(*(mit->second));
+    				mit->second->clear();//clear used msgs
+    			}
+    			AggregatorT* agg=(AggregatorT*)get_aggregator();
+    			if(agg!=NULL) agg->stepPartial(*it);
+    			if((*it)->is_active()) active_count++;
+    		}
+    	}
+    	*/
 
     void active_compute()
     {
         active_count = 0;
         MessageBufT* mbuf = (MessageBufT*)get_message_buffer();
         vector<MessageContainerT>& v_msgbufs = mbuf->get_v_msg_bufs();
-        for (int i = 0; i < vertexes.size(); i++) {
-            if (v_msgbufs[i].size() == 0) {
-                if (vertexes[i]->is_active()) {
+        for (int i = 0; i < vertexes.size(); i++)
+        {
+            if (v_msgbufs[i].size() == 0)
+            {
+                if (vertexes[i]->is_active())
+                {
                     vertexes[i]->compute(v_msgbufs[i]);
                     AggregatorT* agg = (AggregatorT*)get_aggregator();
                     if (agg != NULL)
@@ -168,7 +175,9 @@ public:
                     if (vertexes[i]->is_active())
                         active_count++;
                 }
-            } else {
+            }
+            else
+            {
                 vertexes[i]->activate();
                 vertexes[i]->compute(v_msgbufs[i]);
                 v_msgbufs[i].clear(); //clear used msgs
@@ -186,7 +195,8 @@ public:
         active_count = 0;
         MessageBufT* mbuf = (MessageBufT*)get_message_buffer();
         vector<MessageContainerT>& v_msgbufs = mbuf->get_v_msg_bufs();
-        for (int i = 0; i < vertexes.size(); i++) {
+        for (int i = 0; i < vertexes.size(); i++)
+        {
             vertexes[i]->activate();
             vertexes[i]->compute(v_msgbufs[i]);
             v_msgbufs[i].clear(); //clear used msgs
@@ -208,8 +218,10 @@ public:
     void agg_sync()
     {
         AggregatorT* agg = (AggregatorT*)get_aggregator();
-        if (agg != NULL) {
-            if (_my_rank != MASTER_RANK) { //send partialT to aggregator
+        if (agg != NULL)
+        {
+            if (_my_rank != MASTER_RANK)   //send partialT to aggregator
+            {
                 //gathering PartialT
                 PartialT* part = agg->finishPartial();
                 //------------------------ strategy choosing BEGIN ------------------------
@@ -224,29 +236,39 @@ public:
                 //------------------------ strategy choosing END ------------------------
                 if (total <= AGGSWITCH)
                     slaveGather(*part);
-                else {
+                else
+                {
                     send_ibinstream(m, MASTER_RANK);
                 }
                 //scattering FinalT
                 slaveBcast(*((FinalT*)global_agg));
-            } else {
+            }
+            else
+            {
                 //------------------------ strategy choosing BEGIN ------------------------
                 int total = all_sum(0);
                 //------------------------ strategy choosing END ------------------------
                 //gathering PartialT
-                if (total <= AGGSWITCH) {
+                if (total <= AGGSWITCH)
+                {
                     vector<PartialT*> parts(_num_workers);
                     masterGather(parts);
-                    for (int i = 0; i < _num_workers; i++) {
-                        if (i != MASTER_RANK) {
+                    for (int i = 0; i < _num_workers; i++)
+                    {
+                        if (i != MASTER_RANK)
+                        {
                             PartialT* part = parts[i];
                             agg->stepFinal(part);
                             delete part;
                         }
                     }
-                } else {
-                    for (int i = 0; i < _num_workers; i++) {
-                        if (i != MASTER_RANK) {
+                }
+                else
+                {
+                    for (int i = 0; i < _num_workers; i++)
+                    {
+                        if (i != MASTER_RANK)
+                        {
                             obinstream um = recv_obinstream(i);
                             PartialT* part;
                             um >> part;
@@ -268,7 +290,8 @@ public:
     virtual VertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
 
     void load_vertex(VertexT* v)
-    { //called by load_graph
+    {
+        //called by load_graph
         add_vertex(v);
     }
 
@@ -277,7 +300,8 @@ public:
         hdfsFS fs = getHdfsFS();
         hdfsFile in = getRHandle(inpath, fs);
         LineReader reader(fs, in);
-        while (true) {
+        while (true)
+        {
             reader.readLine();
             if (!reader.eof())
                 load_vertex(toVertex(reader.getLine()));
@@ -298,7 +322,8 @@ public:
         hdfsFS fs = getHdfsFS();
         BufferedWriter* writer = new BufferedWriter(outpath, fs, _my_rank);
 
-        for (VertexIter it = vertexes.begin(); it != vertexes.end(); it++) {
+        for (VertexIter it = vertexes.begin(); it != vertexes.end(); it++)
+        {
             writer->check();
             toline(*it, *writer);
         }
@@ -311,7 +336,8 @@ public:
     void run(const WorkerParams& params)
     {
         //check path + init
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             if (dirCheck(params.input_path.c_str(), params.output_path.c_str(), _my_rank == MASTER_RANK, params.force_write) == -1)
                 exit(-1);
         }
@@ -320,22 +346,25 @@ public:
         //dispatch splits
         ResetTimer(WORKER_TIMER);
         vector<vector<string> >* arrangement;
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             arrangement = params.native_dispatcher ? dispatchLocality(params.input_path.c_str()) : dispatchRan(params.input_path.c_str());
             //reportAssignment(arrangement);//DEBUG !!!!!!!!!!
             masterScatter(*arrangement);
             vector<string>& assignedSplits = (*arrangement)[0];
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
             delete arrangement;
-        } else {
+        }
+        else
+        {
             vector<string> assignedSplits;
             slaveScatter(assignedSplits);
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
         }
 
@@ -358,7 +387,8 @@ public:
         long long step_vadd_num;
         long long global_msg_num = 0;
         long long global_vadd_num = 0;
-        while (true) {
+        while (true)
+        {
             global_step_num++;
             ResetTimer(4);
             //===================
@@ -367,11 +397,13 @@ public:
                 break;
             get_vnum() = all_sum(vertexes.size());
             int wakeAll = getBit(WAKE_ALL_ORBIT, bits_bor);
-            if (wakeAll == 0) {
+            if (wakeAll == 0)
+            {
                 active_vnum() = all_sum(active_count);
                 if (active_vnum() == 0 && getBit(HAS_MSG_ORBIT, bits_bor) == 0)
                     break; //all_halt AND no_msg
-            } else
+            }
+            else
                 active_vnum() = get_vnum();
             //===================
             AggregatorT* agg = (AggregatorT*)get_aggregator();
@@ -386,7 +418,8 @@ public:
             message_buffer->combine();
             step_msg_num = master_sum_LL(message_buffer->get_total_msg());
             step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 global_msg_num += step_msg_num;
                 global_vadd_num += step_vadd_num;
             }
@@ -398,7 +431,8 @@ public:
             //===================
             worker_barrier();
             StopTimer(4);
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 cout << "Superstep " << global_step_num << " done. Time elapsed: " << get_timer(4) << " seconds" << endl;
                 cout << "#msgs: " << step_msg_num << ", #vadd: " << step_vadd_num << endl;
             }
@@ -423,7 +457,8 @@ public:
     void run(const WorkerParams& params, int num_phases)
     {
         //check path + init
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             if (dirCheck(params.input_path.c_str(), params.output_path.c_str(), _my_rank == MASTER_RANK, params.force_write) == -1)
                 exit(-1);
         }
@@ -432,22 +467,25 @@ public:
         //dispatch splits
         ResetTimer(WORKER_TIMER);
         vector<vector<string> >* arrangement;
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             arrangement = params.native_dispatcher ? dispatchLocality(params.input_path.c_str()) : dispatchRan(params.input_path.c_str());
             //reportAssignment(arrangement);//DEBUG !!!!!!!!!!
             masterScatter(*arrangement);
             vector<string>& assignedSplits = (*arrangement)[0];
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
             delete arrangement;
-        } else {
+        }
+        else
+        {
             vector<string> assignedSplits;
             slaveScatter(assignedSplits);
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
         }
 
@@ -464,7 +502,8 @@ public:
         init_timers();
         ResetTimer(WORKER_TIMER);
 
-        for (global_phase_num = 1; global_phase_num <= num_phases; global_phase_num++) {
+        for (global_phase_num = 1; global_phase_num <= num_phases; global_phase_num++)
+        {
             if (_my_rank == MASTER_RANK)
                 cout << "################ Phase " << global_phase_num << " ################" << endl;
 
@@ -475,11 +514,13 @@ public:
             long long global_msg_num = 0;
             long long global_vadd_num = 0;
 
-            while (true) {
+            while (true)
+            {
                 global_step_num++;
                 ResetTimer(4);
                 //===================
-                if (step_num() == 1) {
+                if (step_num() == 1)
+                {
                     get_vnum() = all_sum(vertexes.size());
                     if (phase_num() > 1)
                         active_vnum() = get_vnum();
@@ -498,7 +539,8 @@ public:
                     message_buffer->combine();
                     step_msg_num = master_sum_LL(message_buffer->get_total_msg());
                     step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
-                    if (_my_rank == MASTER_RANK) {
+                    if (_my_rank == MASTER_RANK)
+                    {
                         global_msg_num += step_msg_num;
                         global_vadd_num += step_vadd_num;
                     }
@@ -507,17 +549,21 @@ public:
                     for (int i = 0; i < to_add.size(); i++)
                         add_vertex(to_add[i]);
                     to_add.clear();
-                } else {
+                }
+                else
+                {
                     char bits_bor = all_bor(global_bor_bitmap);
                     if (getBit(FORCE_TERMINATE_ORBIT, bits_bor) == 1)
                         break;
                     get_vnum() = all_sum(vertexes.size());
                     int wakeAll = getBit(WAKE_ALL_ORBIT, bits_bor);
-                    if (wakeAll == 0) {
+                    if (wakeAll == 0)
+                    {
                         active_vnum() = all_sum(active_count);
                         if (active_vnum() == 0 && getBit(HAS_MSG_ORBIT, bits_bor) == 0)
                             break; //all_halt AND no_msg
-                    } else
+                    }
+                    else
                         active_vnum() = get_vnum();
                     //===================
                     AggregatorT* agg = (AggregatorT*)get_aggregator();
@@ -534,7 +580,8 @@ public:
                     message_buffer->combine();
                     step_msg_num = master_sum_LL(message_buffer->get_total_msg());
                     step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
-                    if (_my_rank == MASTER_RANK) {
+                    if (_my_rank == MASTER_RANK)
+                    {
                         global_msg_num += step_msg_num;
                         global_vadd_num += step_vadd_num;
                     }
@@ -547,12 +594,14 @@ public:
                 //===================
                 worker_barrier();
                 StopTimer(4);
-                if (_my_rank == MASTER_RANK) {
+                if (_my_rank == MASTER_RANK)
+                {
                     cout << "Superstep " << global_step_num << " done. Time elapsed: " << get_timer(4) << " seconds" << endl;
                     cout << "#msgs: " << step_msg_num << ", #vadd: " << step_vadd_num << endl;
                 }
             }
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 cout << "************ Phase " << global_phase_num << " done. ************" << endl;
                 cout << "Total #msgs=" << global_msg_num << ", Total #vadd=" << global_vadd_num << endl;
             }
@@ -576,7 +625,8 @@ public:
     void run(const MultiInputParams& params)
     {
         //check path + init
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             if (dirCheck(params.input_paths, params.output_path.c_str(), _my_rank == MASTER_RANK, params.force_write) == -1)
                 exit(-1);
         }
@@ -585,22 +635,25 @@ public:
         //dispatch splits
         ResetTimer(WORKER_TIMER);
         vector<vector<string> >* arrangement;
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             arrangement = params.native_dispatcher ? dispatchLocality(params.input_paths) : dispatchRan(params.input_paths);
             //reportAssignment(arrangement);//DEBUG !!!!!!!!!!
             masterScatter(*arrangement);
             vector<string>& assignedSplits = (*arrangement)[0];
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
             delete arrangement;
-        } else {
+        }
+        else
+        {
             vector<string> assignedSplits;
             slaveScatter(assignedSplits);
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
         }
 
@@ -622,7 +675,8 @@ public:
         long long step_vadd_num;
         long long global_msg_num = 0;
         long long global_vadd_num = 0;
-        while (true) {
+        while (true)
+        {
             global_step_num++;
             ResetTimer(4);
             //===================
@@ -631,11 +685,13 @@ public:
                 break;
             get_vnum() = all_sum(vertexes.size());
             int wakeAll = getBit(WAKE_ALL_ORBIT, bits_bor);
-            if (wakeAll == 0) {
+            if (wakeAll == 0)
+            {
                 active_vnum() = all_sum(active_count);
                 if (active_vnum() == 0 && getBit(HAS_MSG_ORBIT, bits_bor) == 0)
                     break; //all_halt AND no_msg
-            } else
+            }
+            else
                 active_vnum() = get_vnum();
             //===================
             AggregatorT* agg = (AggregatorT*)get_aggregator();
@@ -650,7 +706,8 @@ public:
             message_buffer->combine();
             step_msg_num = master_sum_LL(message_buffer->get_total_msg());
             step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 global_msg_num += step_msg_num;
                 global_vadd_num += step_vadd_num;
             }
@@ -662,7 +719,8 @@ public:
             //===================
             worker_barrier();
             StopTimer(4);
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 cout << "Superstep " << global_step_num << " done. Time elapsed: " << get_timer(4) << " seconds" << endl;
                 cout << "#msgs: " << step_msg_num << ", #vadd: " << step_vadd_num << endl;
             }
@@ -688,7 +746,8 @@ public:
     void run_report(const WorkerParams& params, const string reportPath)
     {
         //check path + init
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             if (dirCheck(params.input_path.c_str(), params.output_path.c_str(), _my_rank == MASTER_RANK, params.force_write) == -1)
                 exit(-1);
         }
@@ -697,22 +756,25 @@ public:
         //dispatch splits
         ResetTimer(WORKER_TIMER);
         vector<vector<string> >* arrangement;
-        if (_my_rank == MASTER_RANK) {
+        if (_my_rank == MASTER_RANK)
+        {
             arrangement = params.native_dispatcher ? dispatchLocality(params.input_path.c_str()) : dispatchRan(params.input_path.c_str());
             //reportAssignment(arrangement);//DEBUG !!!!!!!!!!
             masterScatter(*arrangement);
             vector<string>& assignedSplits = (*arrangement)[0];
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
             delete arrangement;
-        } else {
+        }
+        else
+        {
             vector<string> assignedSplits;
             slaveScatter(assignedSplits);
             //reading assigned splits (map)
             for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
+                    it != assignedSplits.end(); it++)
                 load_graph(it->c_str());
         }
 
@@ -725,7 +787,7 @@ public:
         PrintTimer("Load Time", WORKER_TIMER);
 
         //=========================================================
-        vector<int> msgNumVec; //$$$$$$$$$$$$$$$$$$$$ added for per-worker msg counting
+        vector<long long> msgNumVec; //$$$$$$$$$$$$$$$$$$$$ added for per-worker msg counting
 
         init_timers();
         ResetTimer(WORKER_TIMER);
@@ -735,7 +797,8 @@ public:
         long long step_vadd_num;
         long long global_msg_num = 0;
         long long global_vadd_num = 0;
-        while (true) {
+        while (true)
+        {
             global_step_num++;
             ResetTimer(4);
             //===================
@@ -744,11 +807,13 @@ public:
                 break;
             get_vnum() = all_sum(vertexes.size());
             int wakeAll = getBit(WAKE_ALL_ORBIT, bits_bor);
-            if (wakeAll == 0) {
+            if (wakeAll == 0)
+            {
                 active_vnum() = all_sum(active_count);
                 if (active_vnum() == 0 && getBit(HAS_MSG_ORBIT, bits_bor) == 0)
                     break; //all_halt AND no_msg
-            } else
+            }
+            else
                 active_vnum() = get_vnum();
             //===================
             AggregatorT* agg = (AggregatorT*)get_aggregator();
@@ -761,11 +826,12 @@ public:
             else
                 active_compute();
             message_buffer->combine();
-            int my_msg_num = message_buffer->get_total_msg(); //$$$$$$$$$$$$$$$$$$$$ added for per-worker msg counting
+            long long my_msg_num = message_buffer->get_total_msg(); //$$$$$$$$$$$$$$$$$$$$ added for per-worker msg counting
             msgNumVec.push_back(my_msg_num); //$$$$$$$$$$$$$$$$$$$$ added for per-worker msg counting
             step_msg_num = master_sum_LL(my_msg_num); //$$$$$$$$$$$$$$$$$$$$ added for per-worker msg counting
             step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 global_msg_num += step_msg_num;
                 global_vadd_num += step_vadd_num;
             }
@@ -777,7 +843,8 @@ public:
             //===================
             worker_barrier();
             StopTimer(4);
-            if (_my_rank == MASTER_RANK) {
+            if (_my_rank == MASTER_RANK)
+            {
                 cout << "Superstep " << global_step_num << " done. Time elapsed: " << get_timer(4) << " seconds" << endl;
                 cout << "#msgs: " << step_msg_num << ", #vadd: " << step_vadd_num << endl;
             }
@@ -799,10 +866,13 @@ public:
         PrintTimer("Dump Time", WORKER_TIMER);
 
         //dump report
-        if (_my_rank != MASTER_RANK) {
+        if (_my_rank != MASTER_RANK)
+        {
             slaveGather(msgNumVec);
-        } else {
-            vector<vector<int> > report(_num_workers);
+        }
+        else
+        {
+            vector<vector<long long> > report(_num_workers);
             masterGather(report);
             report[MASTER_RANK].swap(msgNumVec);
             //////
@@ -810,15 +880,18 @@ public:
             hdfsFS fs = getHdfsFS();
             hdfsFile out = getWHandle(reportPath.c_str(), fs);
             char buffer[100];
-            for (int i = 0; i < _num_workers; i++) {
-                for (int j = 0; j < report[i].size(); j++) {
-                    sprintf(buffer, "%d ", report[i][j]);
+            for (int i = 0; i < _num_workers; i++)
+            {
+                for (int j = 0; j < report[i].size(); j++)
+                {
+                    sprintf(buffer, "%lld ", report[i][j]);
                     hdfsWrite(fs, out, (void*)buffer, strlen(buffer));
                 }
                 sprintf(buffer, "\n");
                 hdfsWrite(fs, out, (void*)buffer, strlen(buffer));
             }
-            if (hdfsFlush(fs, out)) {
+            if (hdfsFlush(fs, out))
+            {
                 fprintf(stderr, "Failed to 'flush' %s\n", reportPath.c_str());
                 exit(-1);
             }
