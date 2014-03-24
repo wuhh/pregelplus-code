@@ -274,6 +274,7 @@ int main(int argc, char** argv)
 
     graphlab::omni_engine<bmm> engine(dc, graph, exec_type);
 
+    t.start();
     int round = 0;
     while(true)
     {
@@ -287,7 +288,7 @@ int main(int argc, char** argv)
         graph.transform_vertices(copy_lastmatchto);
     }
 
-    dc.cout() << "Finished Running engine in " << engine.elapsed_seconds()
+    dc.cout() << "Finished Running engine in " << t.current_time()
     << " seconds after " <<  round << " rounds." << std::endl;
 
     t.start();
