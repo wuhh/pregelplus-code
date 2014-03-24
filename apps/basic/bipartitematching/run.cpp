@@ -3,7 +3,7 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_bipartitematching("/pullgel/livej", "/exp/approx");
+    pregel_bipartitematching("/pullgel/blivej", "/exp/bmm");
     worker_finalize();
     return 0;
 }
