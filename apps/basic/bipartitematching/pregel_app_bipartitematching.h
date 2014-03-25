@@ -52,7 +52,7 @@ public:
                 for (int i = 0; i < edges.size(); i++) {
                     send_message(edges[i], id); // request
                 }
-                vote_to_halt();
+//                vote_to_halt();
             }
 
         } else if (step_num() % 4 == 2) {
@@ -96,8 +96,8 @@ public:
             {
                 if (messages.size() == 1) {
                     value().matchTo = messages[0]; // update
-                    vote_to_halt();
                 }
+                vote_to_halt();
             }
         }
     }
