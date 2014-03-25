@@ -41,6 +41,11 @@ public:
     virtual void compute(MessageContainer& messages)
     {
         std::vector<VertexID>& edges = value().edges;
+        if(value().matchTo != -1)
+        {
+            vote_to_halt();
+            return;
+        }
         if (step_num() % 4 == 1) {
             if (value().left == 1 && value().matchTo == -1) // left not matched
             {
@@ -68,6 +73,11 @@ public:
         } else if (step_num() % 4 == 3) {
             if (value().left == 1 && value().matchTo == -1) // left not matched
             {
+                if(messages.size() == 0)
+                {
+                    vote_to_halt();
+                    return;
+                }
             	vector<int> grants;
             	for(int i = 0 ;i < messages.size() ;i ++)
             	{
@@ -86,12 +96,10 @@ public:
             {
                 if (messages.size() == 1) {
                     value().matchTo = messages[0]; // update
+                    vote_to_halt();
                 }
-                vote_to_halt();
             }
         }
-        if(value().left == 0) //right vote to halt
-        	vote_to_halt();
     }
 };
 
