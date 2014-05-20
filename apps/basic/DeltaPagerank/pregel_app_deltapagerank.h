@@ -3,14 +3,12 @@ using namespace std;
 
 struct DeltaPRValue_pregel {
     double pr;
-    double delta;
     vector<VertexID> edges;
 };
 
 ibinstream& operator<<(ibinstream& m, const DeltaPRValue_pregel& v)
 {
     m << v.pr;
-    m << v.delta;
     m << v.edges;
     return m;
 }
@@ -18,7 +16,6 @@ ibinstream& operator<<(ibinstream& m, const DeltaPRValue_pregel& v)
 obinstream& operator>>(obinstream& m, DeltaPRValue_pregel& v)
 {
     m >> v.pr;
-    m >> v.delta;
     m >> v.edges;
     return m;
 }
@@ -34,7 +31,6 @@ public:
     	double delta = 0;
     	if (step_num() == 1) {
             value().pr = 0;
-            delta = 0.15;
         }
 
         for (MessageIter it = messages.begin(); it != messages.end(); it++)
