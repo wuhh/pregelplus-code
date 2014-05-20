@@ -1,3 +1,4 @@
+#include "pregel_app_ugcheck.h"
 #include "pregel_ppa_hashmin.h"
 #include "pregel_app_sv.h"
 #include "pregel_ppa_spantree.h"
@@ -23,6 +24,8 @@ int main(int argc, char* argv[])
 {
     init_workers();
     print(argv[1]);
+    //print("ppa_ugcheck");
+    //ppa_ugcheck(argv[1],"/ppa/ug");
     print("ppa_hashmin");
     ppa_hashmin(argv[1], "/ppa/hashmin_ppa", true);
     print("ppa_spantree");

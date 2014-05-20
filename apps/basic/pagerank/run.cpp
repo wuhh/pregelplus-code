@@ -3,7 +3,7 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_pagerank("/pullgel/webuk", "/exp/pagerank_out", false);
+    pregel_pagerank(argv[1], argv[2], true);
 
     worker_finalize();
     return 0;

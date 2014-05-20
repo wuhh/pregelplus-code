@@ -1,21 +1,18 @@
 #include "basic/pregel-dev.h"
 using namespace std;
 
-struct CCValue_ppa {
-    int color;
+struct UGValue_ppa {
     vector<VertexID> edges;
 };
 
-ibinstream& operator<<(ibinstream& m, const CCValue_ppa& v)
+ibinstream& operator<<(ibinstream& m, const UGValue_ppa& v)
 {
-    m << v.color;
     m << v.edges;
     return m;
 }
 
-obinstream& operator>>(obinstream& m, CCValue_ppa& v)
+obinstream& operator>>(obinstream& m, UGValue_ppa& v)
 {
-    m >> v.color;
     m >> v.edges;
     return m;
 }
@@ -30,7 +27,7 @@ void print_vector(const T& v)
     //cout << endl;
 }
 
-class CCVertex_ppa : public Vertex<VertexID, CCValue_ppa, VertexID> {
+class UGVertex_ppa : public Vertex<VertexID, UGValue_ppa, VertexID> {
 public:
     void broadcast(VertexID msg)
     {
@@ -50,6 +47,7 @@ public:
         } else {
             sort(value().edges.begin(), value().edges.end());
             sort(messages.begin(), messages.end());
+            messages.erase(unique(messages.begin(),messages.end()),messages.end());
             if (value().edges != messages) {
                 cout << "I am : " << id;
                 cout << " Out neighbor: ";
@@ -58,22 +56,23 @@ public:
                 print_vector(messages);
                 cout << endl;
             }
+            value().edges.swap(messages);
             vote_to_halt();
         }
     }
 };
 
-class CCWorker_ppa : public Worker<CCVertex_ppa> {
+class UGWorker_ppa : public Worker<UGVertex_ppa> {
     char buf[100];
 
 public:
     //C version
-    virtual CCVertex_ppa* toVertex(char* line)
+    virtual UGVertex_ppa* toVertex(char* line)
     {
 
         char* pch;
         pch = strtok(line, "\t");
-        CCVertex_ppa* v = new CCVertex_ppa;
+        UGVertex_ppa* v = new UGVertex_ppa;
         v->id = atoi(pch);
         pch = strtok(NULL, " ");
         int num = atoi(pch);
@@ -85,38 +84,26 @@ public:
         return v;
     }
 
-    virtual void toline(CCVertex_ppa* v, BufferedWriter& writer)
+    virtual void toline(UGVertex_ppa* v, BufferedWriter& writer)
     {
-        sprintf(buf, "%d\t%d ", v->id, v->value().color);
+        sprintf(buf, "%d\t%d", v->id, v->value().edges.size());
         writer.write(buf);
         vector<int>& nbs = v->value().edges;
         for (int i = 0; i < nbs.size(); i++) {
-            sprintf(buf, "%d ", nbs[i]);
+            sprintf(buf, " %d", nbs[i]);
             writer.write(buf);
         }
         writer.write("\n");
     }
 };
 
-class CCCombiner_ppa : public Combiner<VertexID> {
-public:
-    virtual void combine(VertexID& old, const VertexID& new_msg)
-    {
-        if (old > new_msg)
-            old = new_msg;
-    }
-};
-
-void ppa_hashmin(string in_path, string out_path, bool use_combiner)
+void ppa_ugcheck(string in_path, string out_path)
 {
     WorkerParams param;
     param.input_path = in_path;
     param.output_path = out_path;
     param.force_write = true;
     param.native_dispatcher = false;
-    CCWorker_ppa worker;
-    CCCombiner_ppa combiner;
-    if (use_combiner)
-        worker.setCombiner(&combiner);
+    UGWorker_ppa worker;
     worker.run(param);
 }

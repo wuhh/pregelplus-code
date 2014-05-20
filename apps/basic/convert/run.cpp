@@ -1,9 +1,8 @@
-#include "vworker_app_sssp.h"
-
+#include "pregel_app_convert.h"
 int main(int argc, char* argv[])
 {
     init_workers();
-    vworker_sssp(1, "/sssp_vw", "/sssp_out", true);
+    pregel_convert(argv[1], argv[2]);
     worker_finalize();
     return 0;
 }
