@@ -51,19 +51,16 @@ public:
         	value().delta  += *it;
         }
 
-        double newPageRank = value().pr + value().delta ;
-
-
-        value().pr = newPageRank;
+        value().pr += value().delta ;
 
 
         if(value().edges.size() > 0)
         {
-        	 double pr = newPageRank / value().edges.size();
+        	 double updateToNeighbor = value().pr / value().edges.size();
 
         	 for (vector<VertexID>::iterator it = value().edges.begin(); it != value().edges.end(); it++)
         	 {
-        		 send_message(*it, pr);
+        		 send_message(*it, updateToNeighbor);
         	 }
         }
 
