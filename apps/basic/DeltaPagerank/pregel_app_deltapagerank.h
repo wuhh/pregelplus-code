@@ -3,12 +3,14 @@ using namespace std;
 
 struct DeltaPRValue_pregel {
     double pr;
+    double delta;
     vector<VertexID> edges;
 };
 
 ibinstream& operator<<(ibinstream& m, const DeltaPRValue_pregel& v)
 {
     m << v.pr;
+    m << v.delta;
     m << v.edges;
     return m;
 }
@@ -16,6 +18,7 @@ ibinstream& operator<<(ibinstream& m, const DeltaPRValue_pregel& v)
 obinstream& operator>>(obinstream& m, DeltaPRValue_pregel& v)
 {
     m >> v.pr;
+    m >> v.delta;
     m >> v.edges;
     return m;
 }
@@ -27,22 +30,29 @@ public:
 
     virtual void compute(MessageContainer& messages)
     {
-    	const double EPS = 0.01;
-    	double delta = 0;
+    	if(step_num() >= 2)
+    	{
+    		int* agg = (int*)getAgg();
+    		if(*agg == get_vnum())
+    		{
+    			vote_to_halt();
+    			return;
+    		}
+    	}
+
+    	value().delta = 0;
     	if (step_num() == 1) {
             value().pr = 0;
+            value().delta = 0.15;
         }
 
         for (MessageIter it = messages.begin(); it != messages.end(); it++)
         {
-        	delta += *it;
+        	value().delta  += *it;
         }
 
-        vote_to_halt();
+        double newPageRank = value().pr + value().delta ;
 
-        if(delta < EPS / get_vnum()) return;
-
-        double newPageRank = value().pr + delta;
 
         value().pr = newPageRank;
 
@@ -59,8 +69,40 @@ public:
 
     }
 };
+class DeltaPRAgg_pregel : public Aggregator<DeltaPRVertex_pregel, int, int> {
+private:
+    int counter;
 
-class DeltaPRWorker_pregel : public Worker<DeltaPRVertex_pregel> {
+public:
+    virtual void init()
+    {
+        counter = 0;
+    }
+
+    virtual void stepPartial(DeltaPRVertex_pregel* v)
+    {
+    	const double EPS = 0.01;
+    	if(v->value().delta < EPS / get_vnum())
+    		counter++;
+    }
+
+    virtual void stepFinal(int* part)
+    {
+    	counter += *part;
+    }
+
+    virtual int* finishPartial()
+    {
+        return &counter;
+    }
+    virtual int* finishFinal()
+    {
+    	cout << "Total: " << get_vnum() << " On converge: " << counter << endl;
+        return &counter;
+    }
+};
+
+class DeltaPRWorker_pregel : public Worker<DeltaPRVertex_pregel,DeltaPRAgg_pregel> {
     char buf[100];
 
 public:
@@ -105,6 +147,8 @@ void pregel_deltapagerank(string in_path, string out_path, bool use_combiner)
     DeltaPRCombiner_pregel combiner;
     if (use_combiner)
         worker.setCombiner(&combiner);
+    DeltaPRAgg_pregel agg;
+    worker.setAggregator(&agg);
     worker.run(param);
 }
 
