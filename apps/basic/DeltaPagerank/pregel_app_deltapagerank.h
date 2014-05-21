@@ -56,7 +56,7 @@ public:
 
         if(value().edges.size() > 0)
         {
-        	 double updateToNeighbor = value().pr / value().edges.size();
+        	 double updateToNeighbor = 0.85 * value().delta / value().edges.size();
 
         	 for (vector<VertexID>::iterator it = value().edges.begin(); it != value().edges.end(); it++)
         	 {
