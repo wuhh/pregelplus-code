@@ -79,7 +79,7 @@ public:
     virtual void stepPartial(DeltaPRVertex_pregel* v)
     {
     	const double EPS = 0.01;
-    	if(v->value().delta < EPS / get_vnum())
+    	if(v->value().delta < EPS )
     		counter++;
     }
 
