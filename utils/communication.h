@@ -388,17 +388,17 @@ void slaveScatter(T& to_get)
 template <class T>
 void AllGather(const T& elem, vector<T>& results)
 { //gather
-	/*
+
     StartTimer(COMMUNICATION_TIMER);
     int* recv_size = new int[_num_workers];
-
+    int* recv_offsets = new int[_num_workers];
     ibinstream m;
     m << elem;
     int send_buffer_size = m.size();
 
     MPI_Allgather(&send_buffer_size,1,MPI_INT,recv_size,1,MPI_INT,MPI_COMM_WORLD);
     // Construct offsets
-    int* recv_offsets = new int[_num_workers];
+
     int sum = 0;
     for(size_t i = 0; i < _num_workers; ++i) {
     	recv_offsets[i] = sum;
@@ -406,13 +406,15 @@ void AllGather(const T& elem, vector<T>& results)
     }
     char* recv_buffer = new char[sum];
 
-    MPI_Allgatherv(m.buf, send_buffer_size, MPI_BYTE,recv_buffer,recv_size,recv_offsets,MPI_BYTE,MPI_COMM_WORLD);
+    MPI_Allgatherv(m.get_buf(), send_buffer_size, MPI_BYTE,recv_buffer,recv_size,recv_offsets,MPI_BYTE,MPI_COMM_WORLD);
     obinstream um(recv_buffer, sum);
     for (int i = 0; i < _num_workers; i++){
         um >> results[i];
     }
+    delete[] recv_size;
+    delete[] recv_offsets;
     StopTimer(COMMUNICATION_TIMER);
-    */
+
 }
 
 
