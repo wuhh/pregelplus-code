@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "utils/global.h"
+#include "utils/tcpcomm.h"
 #include "Vertex.h"
 #include "Worker.h"
 using namespace std;

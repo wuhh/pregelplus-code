@@ -1,17 +1,27 @@
+#ifndef TCPCOMM_H
+#define TCPCOMM_H
+
+
 /*
- * Communication.h
+ * tcpcomm.h
  *
  *  Created on: Jun 19, 2014
  *      Author: ylu
  */
+
+
 #include <netinet/in.h>
 
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 
+
 #include <cstring>
 #include <vector>
+
+#include "communication.h"
+#include "global.h"
 
 bool str_to_ip(const char* c, uint32_t& out)
 {
@@ -136,3 +146,29 @@ void get_free_tcp_port(size_t& freeport, int& sock)
     }
     freeport = ntohs(((sockaddr_in*)(&addr))->sin_port);
 }
+
+void tcpcomm_init()
+{
+	int me = get_worker_id();
+	int np = get_num_workers();
+
+    size_t freeport;
+    int sock;
+    get_free_tcp_port(freeport, sock);
+    std::cout << "rank: " << me << " " << freeport << " " << sock << std::endl;
+
+    std::string ipaddr = get_local_ip_as_str(me == 0) + ":" + tostr(freeport); // print stuff only if I am master
+    std::cout << "Will Listen on: " << ipaddr << std::endl;
+    std::vector<std::string> machines(np, "");
+
+    AllGather(ipaddr,machines);
+
+    if(_my_rank == 0)
+    {
+    	for(int i = 0; i< machines.size(); i ++)
+    	{
+    		std::cout << machines[i] << std::endl;
+    	}
+    }
+}
+#endif

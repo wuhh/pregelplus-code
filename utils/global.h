@@ -9,7 +9,7 @@
 #include <ext/hash_map>
 
 #include "utils/stl_util.h"
-#include "utils/tcpcomm.h"
+
 
 #define hash_map __gnu_cxx::hash_map
 #define hash_set __gnu_cxx::hash_set
@@ -30,20 +30,11 @@ inline int get_num_workers()
 {
     return _num_workers;
 }
-
 void init_workers()
 {
     MPI_Init(NULL, NULL);
     MPI_Comm_size(MPI_COMM_WORLD, &_num_workers);
     MPI_Comm_rank(MPI_COMM_WORLD, &_my_rank);
-    size_t freeport;
-    int sock;
-    get_free_tcp_port(freeport, sock);
-    cout << "rank: " << _my_rank << " " << freeport << " " << sock << endl;
-
-    std::string ipaddr = get_local_ip_as_str(_my_rank == 0) + ":" + tostr(freeport); // print stuff only if I am master
-    std::cout << "Will Listen on: " << ipaddr << std::endl;
-    std::vector<std::string> machines;
 }
 
 void worker_finalize()
