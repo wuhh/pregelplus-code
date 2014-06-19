@@ -7,6 +7,9 @@
 #include <string>
 #include <ext/hash_set>
 #include <ext/hash_map>
+
+#include "utils/tcpcomm.h"
+
 #define hash_map __gnu_cxx::hash_map
 #define hash_set __gnu_cxx::hash_set
 #include <assert.h> //for ease of debug
@@ -32,6 +35,10 @@ void init_workers()
     MPI_Init(NULL, NULL);
     MPI_Comm_size(MPI_COMM_WORLD, &_num_workers);
     MPI_Comm_rank(MPI_COMM_WORLD, &_my_rank);
+    size_t freeport;
+    int sock;
+    get_free_tcp_port(freeport,sock);
+    cout << "rank: " << _my_rank << " " << freeport << " " << sock << endl;
 }
 
 void worker_finalize()
