@@ -159,9 +159,5 @@ void tcpcomm_init()
     std::vector<std::string> machines(np, "");
 
     AllGather(ipaddr, machines);
-
-    for (int i = 0; i < machines.size(); i++) {
-        std::cout << "myrank: " << me << " ip: " << machines[i] << std::endl;
-    }
 }
 #endif
