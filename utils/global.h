@@ -8,6 +8,7 @@
 #include <ext/hash_set>
 #include <ext/hash_map>
 
+#include "utils/stl_util.h"
 #include "utils/tcpcomm.h"
 
 #define hash_map __gnu_cxx::hash_map
@@ -39,6 +40,10 @@ void init_workers()
     int sock;
     get_free_tcp_port(freeport, sock);
     cout << "rank: " << _my_rank << " " << freeport << " " << sock << endl;
+
+    std::string ipaddr = get_local_ip_as_str(_my_rank == 0) + ":" + tostr(freeport); // print stuff only if I am master
+    std::cout << "Will Listen on: " << ipaddr << std::endl;
+    std::vector<std::string> machines;
 }
 
 void worker_finalize()
