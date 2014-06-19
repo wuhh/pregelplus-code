@@ -2,8 +2,7 @@
 #include "utils/type.h"
 using namespace std;
 
-struct UGTODGValue_pregel
-{
+struct UGTODGValue_pregel {
     vector<intpair> edges;
 };
 
@@ -21,34 +20,27 @@ obinstream& operator>>(obinstream& m, UGTODGValue_pregel& v)
 
 //====================================
 
-class UGTODGVertex_pregel : public Vertex<VertexID, UGTODGValue_pregel, VertexID>
-{
+class UGTODGVertex_pregel : public Vertex<VertexID, UGTODGValue_pregel, VertexID> {
 public:
     virtual void compute(MessageContainer& messages)
     {
-    	vector<intpair>& nbs = value().edges;
-        if (step_num() == 1)
-        {
+        vector<intpair>& nbs = value().edges;
+        if (step_num() == 1) {
 
-            for (int i = 0; i < nbs.size(); i++)
-            {
+            for (int i = 0; i < nbs.size(); i++) {
                 send_message(nbs[i].v1, id);
             }
             vote_to_halt();
-        }
-        else
-        {
-            for (int i = 0; i < messages.size(); i++)
-            {
-            	nbs.push_back(intpair(messages[i],0));
+        } else {
+            for (int i = 0; i < messages.size(); i++) {
+                nbs.push_back(intpair(messages[i], 0));
             }
             vote_to_halt();
         }
     }
 };
 
-class UGTODGWorker_pregel : public Worker<UGTODGVertex_pregel>
-{
+class UGTODGWorker_pregel : public Worker<UGTODGVertex_pregel> {
     char buf[100];
 
 public:
@@ -61,30 +53,27 @@ public:
         v->id = atoi(pch);
         pch = strtok(NULL, " ");
         int num = atoi(pch);
-        for (int i = 0; i < num; i++)
-        {
+        for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
-            v->value().edges.push_back(intpair(atoi(pch),1));
+            v->value().edges.push_back(intpair(atoi(pch), 1));
         }
         return v;
     }
 
     virtual void toline(UGTODGVertex_pregel* v, BufferedWriter& writer)
     {
-    	vector<intpair>& nbs = v->value().edges;
+        vector<intpair>& nbs = v->value().edges;
         sprintf(buf, "%d\t%d", v->id, nbs.size());
         writer.write(buf);
 
-        for(int i = 0; i < nbs.size(); i ++)
-        {
-        	sprintf(buf, " %d %d", nbs[i].v1, nbs[i].v2);
-        	writer.write(buf);
+        for (int i = 0; i < nbs.size(); i++) {
+            sprintf(buf, " %d %d", nbs[i].v1, nbs[i].v2);
+            writer.write(buf);
         }
 
         writer.write("\n");
     }
 };
-
 
 void pregel_UGTODG(string in_path, string out_path)
 {

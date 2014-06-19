@@ -78,7 +78,7 @@ public:
         writer.write(buf);
         vector<intpair>& edges = v->value().edges;
         for (int i = 0; i < edges.size(); i++) {
-            sprintf(buf, "%d %d %lf ", edges[i].v1, edges[i].v2,v->value().dis[i]);
+            sprintf(buf, "%d %d %lf ", edges[i].v1, edges[i].v2, v->value().dis[i]);
             writer.write(buf);
         }
         writer.write("\n");

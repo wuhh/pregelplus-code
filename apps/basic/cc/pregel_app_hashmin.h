@@ -1,8 +1,7 @@
 #include "basic/pregel-dev.h"
 using namespace std;
 int T;
-struct CCValue_pregel
-{
+struct CCValue_pregel {
     int color;
     vector<VertexID> edges;
 };
@@ -23,86 +22,66 @@ obinstream& operator>>(obinstream& m, CCValue_pregel& v)
 
 //====================================
 
-class CCVertex_pregel : public Vertex<VertexID, CCValue_pregel, VertexID>
-{
+class CCVertex_pregel : public Vertex<VertexID, CCValue_pregel, VertexID> {
 public:
     void broadcast(VertexID msg)
     {
         vector<VertexID>& nbs = value().edges;
-        for (int i = 0; i < nbs.size(); i++)
-        {
+        for (int i = 0; i < nbs.size(); i++) {
             send_message(nbs[i], msg);
         }
     }
 
     virtual void compute(MessageContainer& messages)
     {
-        if(phase_num() == 1)
-        {
-            if (step_num() == 1)
-            {
+        if (phase_num() == 1) {
+            if (step_num() == 1) {
                 VertexID min = id;
                 vector<VertexID>& nbs = value().edges;
-                for (int i = 0; i < nbs.size(); i++)
-                {
+                for (int i = 0; i < nbs.size(); i++) {
                     if (min > nbs[i])
                         min = nbs[i];
                 }
                 value().color = min;
-                if(value().edges.size() < T)
-                {
+                if (value().edges.size() < T) {
                     broadcast(min);
                 }
                 vote_to_halt();
-            }
-            else
-            {
+            } else {
                 VertexID min = messages[0];
-                for (int i = 1; i < messages.size(); i++)
-                {
+                for (int i = 1; i < messages.size(); i++) {
                     if (min > messages[i])
                         min = messages[i];
                 }
-                if (min < value().color)
-                {
+                if (min < value().color) {
                     value().color = min;
-                    if(value().edges.size() < T)
-                    {
+                    if (value().edges.size() < T) {
                         broadcast(min);
                     }
                 }
                 vote_to_halt();
             }
-        }
-        else
-        {
-            if (step_num() == 1)
-            {
+        } else {
+            if (step_num() == 1) {
                 broadcast(id);
                 vote_to_halt();
-            }
-            else
-            {
+            } else {
                 VertexID min = messages[0];
-                for (int i = 1; i < messages.size(); i++)
-                {
+                for (int i = 1; i < messages.size(); i++) {
                     if (min > messages[i])
                         min = messages[i];
                 }
-                if (min < value().color)
-                {
+                if (min < value().color) {
                     value().color = min;
                     broadcast(min);
                 }
                 vote_to_halt();
             }
         }
-
     }
 };
 
-class CCWorker_pregel : public Worker<CCVertex_pregel>
-{
+class CCWorker_pregel : public Worker<CCVertex_pregel> {
     char buf[100];
 
 public:
@@ -115,8 +94,7 @@ public:
         v->id = atoi(pch);
         pch = strtok(NULL, " ");
         int num = atoi(pch);
-        for (int i = 0; i < num; i++)
-        {
+        for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             v->value().edges.push_back(atoi(pch));
         }
@@ -130,8 +108,7 @@ public:
     }
 };
 
-class CCCombiner_pregel : public Combiner<VertexID>
-{
+class CCCombiner_pregel : public Combiner<VertexID> {
 public:
     virtual void combine(VertexID& old, const VertexID& new_msg)
     {
@@ -151,5 +128,5 @@ void pregel_hashmin(string in_path, string out_path, bool use_combiner)
     CCCombiner_pregel combiner;
     if (use_combiner)
         worker.setCombiner(&combiner);
-    worker.run(param,2);
+    worker.run(param, 2);
 }

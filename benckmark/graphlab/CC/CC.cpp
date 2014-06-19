@@ -6,11 +6,10 @@
 
 typedef int color_type;
 
-struct vertex_data: graphlab::IS_POD_TYPE
-{
+struct vertex_data : graphlab::IS_POD_TYPE {
     color_type color;
-    vertex_data(color_type color = std::numeric_limits<color_type>::max()) :
-        color(color)
+    vertex_data(color_type color = std::numeric_limits<color_type>::max())
+        : color(color)
     {
     }
 };
@@ -18,11 +17,10 @@ struct vertex_data: graphlab::IS_POD_TYPE
 typedef graphlab::empty edge_data;
 typedef graphlab::distributed_graph<vertex_data, edge_data> graph_type;
 
-struct min_color_type: graphlab::IS_POD_TYPE
-{
+struct min_color_type : graphlab::IS_POD_TYPE {
     color_type color;
-    min_color_type(color_type color = std::numeric_limits<color_type>::max()) :
-        color(color)
+    min_color_type(color_type color = std::numeric_limits<color_type>::max())
+        : color(color)
     {
     }
     min_color_type& operator+=(const min_color_type& other)
@@ -33,13 +31,13 @@ struct min_color_type: graphlab::IS_POD_TYPE
 };
 
 // gather type is graphlab::empty, then we use message model
-class cc: public graphlab::ivertex_program<graph_type, graphlab::empty,
-    min_color_type>, public graphlab::IS_POD_TYPE
-{
+class cc : public graphlab::ivertex_program<graph_type, graphlab::empty,
+                                            min_color_type>,
+           public graphlab::IS_POD_TYPE {
     bool changed;
     color_type min_color;
-public:
 
+public:
     void init(icontext_type& context, const vertex_type& vertex,
               const min_color_type& msg)
     {
@@ -55,16 +53,14 @@ public:
     void apply(icontext_type& context, vertex_type& vertex,
                const graphlab::empty& empty)
     {
-        if(context.iteration() == 0)
-        {
+        if (context.iteration() == 0) {
             vertex.data().color = vertex.id();
             changed = true;
             return;
         }
 
         changed = false;
-        if (vertex.data().color > min_color)
-        {
+        if (vertex.data().color > min_color) {
             changed = true;
             vertex.data().color = min_color;
         }
@@ -86,13 +82,11 @@ public:
         const vertex_type other = edge.target();
         color_type newc = vertex.data().color;
         const min_color_type msg(newc);
-        context.signal(other,msg);
+        context.signal(other, msg);
     }
-
 };
 
-struct cc_writer
-{
+struct cc_writer {
     std::string save_vertex(const graph_type::vertex_type& vtx)
     {
         std::stringstream strm;
@@ -116,10 +110,9 @@ bool line_parser(graph_type& graph, const std::string& filename,
     ssin >> vid;
     int out_nb;
     ssin >> out_nb;
-    if(out_nb == 0)
+    if (out_nb == 0)
         graph.add_vertex(vid);
-    while (out_nb--)
-    {
+    while (out_nb--) {
         graphlab::vertex_id_type other_vid;
         ssin >> other_vid;
         graph.add_edge(vid, other_vid);
@@ -131,8 +124,8 @@ int main(int argc, char** argv)
 {
     graphlab::mpi_tools::init(argc, argv);
 
-    char *input_file = "hdfs://master:9000/pullgel/friend";
-    char *output_file = "hdfs://master:9000/exp/friend";
+    char* input_file = "hdfs://master:9000/pullgel/friend";
+    char* output_file = "hdfs://master:9000/exp/friend";
     std::string exec_type = "synchronous";
 
     graphlab::distributed_control dc;

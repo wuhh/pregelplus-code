@@ -44,9 +44,8 @@ public:
             }
         } else
             vote_to_halt();
-        if(id == 8737 )
-        {
-            cout << "step: " << step_num() << " " << value().pr << endl;  
+        if (id == 8737) {
+            cout << "step: " << step_num() << " " << value().pr << endl;
         }
     }
 };

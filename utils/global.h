@@ -37,7 +37,7 @@ void init_workers()
     MPI_Comm_rank(MPI_COMM_WORLD, &_my_rank);
     size_t freeport;
     int sock;
-    get_free_tcp_port(freeport,sock);
+    get_free_tcp_port(freeport, sock);
     cout << "rank: " << _my_rank << " " << freeport << " " << sock << endl;
 }
 
