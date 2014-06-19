@@ -191,6 +191,6 @@ void set_ghost_threshold(int tau)
 }
 
 //====================================================
-#define ROUND 92 //for PageRank
+#define ROUND 31 //for PageRank
 
 #endif

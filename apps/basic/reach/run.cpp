@@ -1,9 +1,11 @@
-#include "pregel_app_reach.h"
+//#include "pregel_app_reach.h"
+#include "vworker_app_reach.h"
 
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_reach("/pullgel/livej", "/exp/reach", true);
+    vworker_reach("/ldgreach/livej", "/exp/reach", true);
+
     worker_finalize();
     return 0;
 }

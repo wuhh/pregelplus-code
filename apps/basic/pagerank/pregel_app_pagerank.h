@@ -27,15 +27,15 @@ public:
     virtual void compute(MessageContainer& messages)
     {
         if (step_num() == 1) {
-            value().pr = 1.0 / get_vnum();
+            value().pr = 1.0;
         } else {
             double sum = 0;
             for (MessageIter it = messages.begin(); it != messages.end(); it++) {
                 sum += *it;
             }
             double* agg = (double*)getAgg();
-            double residual = *agg / get_vnum();
-            value().pr = 0.15 / get_vnum() + 0.85 * (sum + residual);
+            double residual = *agg / get_vnum() * 0;
+            value().pr = 0.15 + 0.85 * (sum + residual);
         }
         if (step_num() < ROUND) {
             double msg = value().pr / value().edges.size();
@@ -44,6 +44,10 @@ public:
             }
         } else
             vote_to_halt();
+        if(id == 8737 )
+        {
+            cout << "step: " << step_num() << " " << value().pr << endl;  
+        }
     }
 };
 

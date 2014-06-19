@@ -1,8 +1,8 @@
-#include "pregel_app_hashmin.h"
+#include "pregel_app_DGTOLDG.h"
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_hashmin("/pullgel/btc", "/exp/hashmin", true);
+    vworker_DGTOLDG("/req/livej", "/ldgreach/livej");
     worker_finalize();
     return 0;
 }
