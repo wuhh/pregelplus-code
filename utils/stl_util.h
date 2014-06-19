@@ -17,12 +17,12 @@
 #include <iostream>
 #include <iomanip>
 
-template<typename T>
-std::string tostr(const T& t) {
-	std::stringstream strm;
-	strm << t;
-	return strm.str();
+template <typename T>
+std::string tostr(const T& t)
+{
+    std::stringstream strm;
+    strm << t;
+    return strm.str();
 }
 
 #endif
-

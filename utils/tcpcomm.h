@@ -1,7 +1,6 @@
 #ifndef TCPCOMM_H
 #define TCPCOMM_H
 
-
 /*
  * tcpcomm.h
  *
@@ -9,13 +8,11 @@
  *      Author: ylu
  */
 
-
 #include <netinet/in.h>
 
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
-
 
 #include <cstring>
 #include <vector>
@@ -149,8 +146,8 @@ void get_free_tcp_port(size_t& freeport, int& sock)
 
 void tcpcomm_init()
 {
-	int me = get_worker_id();
-	int np = get_num_workers();
+    int me = get_worker_id();
+    int np = get_num_workers();
 
     size_t freeport;
     int sock;
@@ -161,14 +158,10 @@ void tcpcomm_init()
     std::cout << "Will Listen on: " << ipaddr << std::endl;
     std::vector<std::string> machines(np, "");
 
-    AllGather(ipaddr,machines);
+    AllGather(ipaddr, machines);
 
-    if(_my_rank == 0)
-    {
-    	for(int i = 0; i< machines.size(); i ++)
-    	{
-    		std::cout << machines[i] << std::endl;
-    	}
+    for (int i = 0; i < machines.size(); i++) {
+        std::cout << "myrank: " << me << " ip: " << machines[i] << std::endl;
     }
 }
 #endif
