@@ -321,6 +321,7 @@ public:
         }
 
         //send vertices according to hash_id (reduce)
+        worker_barrier(); //@@@@@@@@@@@@@
         StopTimer(WORKER_TIMER);
         PrintTimer("Load Time", WORKER_TIMER);
         
