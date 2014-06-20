@@ -24,6 +24,7 @@ public:
 
     virtual void compute(MessageContainer& messages)
     {
+    	vote_to_halt();
     }
 };
 
