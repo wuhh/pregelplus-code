@@ -10,7 +10,6 @@
 #include "utils/Combiner.h"
 #include "utils/Aggregator.h"
 #include <omp.h>
-#include <boost/thread.hpp>
 using namespace std;
 
 template <class VertexT, class AggregatorT = DummyAgg> //user-defined VertexT
@@ -212,10 +211,11 @@ public:
 
     inline void add_vertex(VertexT* vertex)
     {
-    	boost::mutex::scoped_lock lock(load_vertex_mutex);
+    	omp_set_lock(&load_vertex_mutex);
         vertexes.push_back(vertex);
         if (vertex->is_active())
             active_count++;
+        omp_unset_lock(&load_vertex_mutex);
     }
 
     void agg_sync()
@@ -319,12 +319,14 @@ public:
     }
     void load_files(vector<string>& assignedSplits)
     {
+    	omp_init_lock(&load_vertex_mutex);
 	#pragma omp parallel for
     	for(int i = 0 ; i < assignedSplits.size() ; i ++)
     	{
     		load_graph(assignedSplits[i].c_str());
     	}
         cout << "Worker: " << _my_rank << " finish loading graphs." << endl;
+        omp_destroy_lock(&load_vertex_mutex);
     }
 
     //=======================================================
@@ -912,7 +914,7 @@ public:
     }
 
 private:
-    boost::mutex load_vertex_mutex;
+    omp_lock_t load_vertex_mutex;
 
     HashT hash;
     VertexContainer vertexes;
