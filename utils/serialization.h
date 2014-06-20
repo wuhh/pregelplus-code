@@ -5,7 +5,7 @@
 #include <set>
 #include <string>
 #include <map>
-//#include "global.h"
+#include "global.h"
 
 using namespace std;
 

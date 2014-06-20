@@ -66,7 +66,8 @@ class ApproxdiameterVertex_ghost : public GVertex<VertexID, ApproxdiameterValue_
 public:
     virtual void compute(MessageContainer& messages)
     {
-        if (step_num() > DIAMETER) {
+        if (step_num() > DIAMETER)
+        {
             vote_to_halt();
             return;
         }
@@ -98,15 +99,17 @@ class ApproxdiameterAgg_ghost : public Aggregator<ApproxdiameterVertex_ghost, si
 private:
     size_t pair_sum;
     size_t last_sum;
-
 public:
     virtual void init()
     {
         pair_sum = 0;
-        if (step_num() == 1) {
-            last_sum = 0;
-        } else {
-            last_sum = *(size_t*)getAgg();
+        if(step_num() == 1)
+        {
+        	last_sum = 0;
+        }
+        else
+        {
+        	last_sum = *(size_t*)getAgg();
         }
     }
 
@@ -126,11 +129,12 @@ public:
     }
     virtual size_t* finishFinal()
     {
-        if (step_num() > 1) {
-            if (pair_sum < last_sum * (1.0 + termination_criteria))
-                ; //DIAMETER = step_num();
-            cout << "Approximate pairs number in " << step_num() - 1 << " hop : " << pair_sum << endl;
-        }
+    	if(step_num() > 1)
+    	{
+    		if(pair_sum < last_sum * (1.0 + termination_criteria))
+    			;//DIAMETER = step_num();
+    		cout << "Approximate pairs number in " << step_num() - 1 << " hop : " << pair_sum << endl;
+    	}
         return &pair_sum;
     }
 };
@@ -170,6 +174,7 @@ public:
         bitwise_or(old, new_msg);
     }
 };
+
 
 void ghost_approxdiameter(string in_path, string out_path, bool use_combiner)
 {

@@ -27,35 +27,43 @@ obinstream& operator>>(obinstream& m, DeltaPRValue_pregel& v)
 
 class DeltaPRVertex_pregel : public Vertex<VertexID, DeltaPRValue_pregel, double> {
 public:
+
     virtual void compute(MessageContainer& messages)
     {
-        if (step_num() >= 2) {
-            int* agg = (int*)getAgg();
-            if (*agg == get_vnum()) {
-                vote_to_halt();
-                return;
-            }
-        }
+    	if(step_num() >= 2)
+    	{
+    		int* agg = (int*)getAgg();
+    		if(*agg == get_vnum())
+    		{
+    			vote_to_halt();
+    			return;
+    		}
+    	}
 
-        value().delta = 0;
-        if (step_num() == 1) {
+    	value().delta = 0;
+    	if (step_num() == 1) {
             value().pr = 0;
             value().delta = 0.15;
         }
 
-        for (MessageIter it = messages.begin(); it != messages.end(); it++) {
-            value().delta += *it;
+        for (MessageIter it = messages.begin(); it != messages.end(); it++)
+        {
+        	value().delta  += *it;
         }
 
-        value().pr += value().delta;
+        value().pr += value().delta ;
 
-        if (value().edges.size() > 0) {
-            double updateToNeighbor = 0.85 * value().delta / value().edges.size();
 
-            for (vector<VertexID>::iterator it = value().edges.begin(); it != value().edges.end(); it++) {
-                send_message(*it, updateToNeighbor);
-            }
+        if(value().edges.size() > 0)
+        {
+        	 double updateToNeighbor = 0.85 * value().delta / value().edges.size();
+
+        	 for (vector<VertexID>::iterator it = value().edges.begin(); it != value().edges.end(); it++)
+        	 {
+        		 send_message(*it, updateToNeighbor);
+        	 }
         }
+
     }
 };
 class DeltaPRAgg_pregel : public Aggregator<DeltaPRVertex_pregel, int, int> {
@@ -70,14 +78,14 @@ public:
 
     virtual void stepPartial(DeltaPRVertex_pregel* v)
     {
-        const double EPS = 0.01;
-        if (v->value().delta < EPS)
-            counter++;
+    	const double EPS = 0.01;
+    	if(v->value().delta < EPS )
+    		counter++;
     }
 
     virtual void stepFinal(int* part)
     {
-        counter += *part;
+    	counter += *part;
     }
 
     virtual int* finishPartial()
@@ -86,12 +94,12 @@ public:
     }
     virtual int* finishFinal()
     {
-        cout << "Total: " << get_vnum() << " On converge: " << counter << endl;
+    	cout << "Total: " << get_vnum() << " On converge: " << counter << endl;
         return &counter;
     }
 };
 
-class DeltaPRWorker_pregel : public Worker<DeltaPRVertex_pregel, DeltaPRAgg_pregel> {
+class DeltaPRWorker_pregel : public Worker<DeltaPRVertex_pregel,DeltaPRAgg_pregel> {
     char buf[100];
 
 public:
@@ -140,3 +148,5 @@ void pregel_deltapagerank(string in_path, string out_path, bool use_combiner)
     worker.setAggregator(&agg);
     worker.run(param);
 }
+
+

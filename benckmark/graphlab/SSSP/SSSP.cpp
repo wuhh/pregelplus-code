@@ -7,27 +7,31 @@
 typedef double distance_type;
 const int SOURCE = 0;
 
-struct vertex_data : graphlab::IS_POD_TYPE {
+struct vertex_data: graphlab::IS_POD_TYPE
+{
     distance_type dist;
-    vertex_data(distance_type dist = std::numeric_limits<distance_type>::max())
-        : dist(dist)
+    vertex_data(distance_type dist = std::numeric_limits<distance_type>::max()) :
+        dist(dist)
     {
     }
 };
 
-struct edge_data : graphlab::IS_POD_TYPE {
+struct edge_data: graphlab::IS_POD_TYPE
+{
     distance_type dist;
-    edge_data(distance_type dist = 1)
-        : dist(dist)
+    edge_data(distance_type dist = 1) :
+        dist(dist)
     {
     }
 };
 typedef graphlab::distributed_graph<vertex_data, edge_data> graph_type;
 
-struct min_distance_type : graphlab::IS_POD_TYPE {
+struct min_distance_type: graphlab::IS_POD_TYPE
+{
     distance_type dist;
-    min_distance_type(distance_type dist = std::numeric_limits<distance_type>::max())
-        : dist(dist)
+    min_distance_type(distance_type dist =
+                          std::numeric_limits<distance_type>::max()) :
+        dist(dist)
     {
     }
     min_distance_type& operator+=(const min_distance_type& other)
@@ -38,13 +42,13 @@ struct min_distance_type : graphlab::IS_POD_TYPE {
 };
 
 // gather type is graphlab::empty, then we use message model
-class sssp : public graphlab::ivertex_program<graph_type, graphlab::empty,
-                                              min_distance_type>,
-             public graphlab::IS_POD_TYPE {
+class sssp: public graphlab::ivertex_program<graph_type, graphlab::empty,
+    min_distance_type>, public graphlab::IS_POD_TYPE
+{
     distance_type min_dist;
     bool changed;
-
 public:
+
     void init(icontext_type& context, const vertex_type& vertex,
               const min_distance_type& msg)
     {
@@ -61,7 +65,8 @@ public:
                const graphlab::empty& empty)
     {
         changed = false;
-        if (vertex.data().dist > min_dist) {
+        if (vertex.data().dist > min_dist)
+        {
             changed = true;
             vertex.data().dist = min_dist;
         }
@@ -84,10 +89,13 @@ public:
 
         const min_distance_type msg(newd);
         context.signal(other, msg);
+
     }
+
 };
 
-struct sssp_writer {
+struct sssp_writer
+{
     std::string save_vertex(const graph_type::vertex_type& vtx)
     {
         std::stringstream strm;
@@ -112,9 +120,10 @@ bool line_parser(graph_type& graph, const std::string& filename,
     ssin >> vid;
     int out_nb;
     ssin >> out_nb;
-    if (out_nb == 0)
+    if(out_nb == 0)
         graph.add_vertex(vid);
-    while (out_nb--) {
+    while (out_nb--)
+    {
         graphlab::vertex_id_type other_vid;
         edge_data edge;
         ssin >> other_vid >> edge.dist;
@@ -132,8 +141,8 @@ void init_vertex(graph_type::vertex_type& vertex)
 int main(int argc, char** argv)
 {
     graphlab::mpi_tools::init(argc, argv);
-    char* input_file = "hdfs://master:9000/pullgel/usa";
-    char* output_file = "hdfs://master:9000/exp/sssp";
+    char *input_file = "hdfs://master:9000/pullgel/usa";
+    char *output_file = "hdfs://master:9000/exp/sssp";
     std::string exec_type = "synchronous";
     graphlab::distributed_control dc;
     global_logger().set_log_level(LOG_INFO);
@@ -146,7 +155,7 @@ int main(int argc, char** argv)
     graph.transform_vertices(init_vertex);
     dc.cout() << "Loading graph in " << t.current_time() << " seconds"
               << std::endl;
-
+    
     graphlab::omni_engine<sssp> engine(dc, graph, exec_type);
 
     engine.signal(SOURCE, min_distance_type(0));
@@ -164,4 +173,5 @@ int main(int argc, char** argv)
               << std::endl;
 
     graphlab::mpi_tools::finalize();
+
 }

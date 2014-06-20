@@ -21,6 +21,7 @@ obinstream& operator>>(obinstream& m, ConvertValue& v)
 
 class ConvertVertex : public Vertex<VertexID, ConvertValue, VertexID> {
 public:
+
     virtual void compute(MessageContainer& messages)
     {
         vote_to_halt();
@@ -51,11 +52,12 @@ public:
     {
         sprintf(buf, "%d\t%d", v->id, v->value().edges.size());
         writer.write(buf);
-        for (int i = 0; i < v->value().edges.size(); i++) {
-            sprintf(buf, " %d 1", v->value().edges[i]);
-            writer.write(buf);
-        }
-        writer.write("\n");
+	for(int i = 0 ;i <  v->value().edges.size() ; i ++)
+	{
+		sprintf(buf, " %d 1",v->value().edges[i]);
+        	writer.write(buf);
+	}
+	writer.write("\n");
     }
 };
 

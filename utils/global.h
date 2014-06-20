@@ -7,9 +7,6 @@
 #include <string>
 #include <ext/hash_set>
 #include <ext/hash_map>
-
-#include "utils/stl_util.h"
-
 #define hash_map __gnu_cxx::hash_map
 #define hash_set __gnu_cxx::hash_set
 #include <assert.h> //for ease of debug
@@ -29,6 +26,7 @@ inline int get_num_workers()
 {
     return _num_workers;
 }
+
 void init_workers()
 {
     MPI_Init(NULL, NULL);

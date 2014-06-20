@@ -47,7 +47,7 @@ public:
         } else {
             sort(value().edges.begin(), value().edges.end());
             sort(messages.begin(), messages.end());
-            messages.erase(unique(messages.begin(), messages.end()), messages.end());
+            messages.erase(unique(messages.begin(),messages.end()),messages.end());
             if (value().edges != messages) {
                 cout << "I am : " << id;
                 cout << " Out neighbor: ";

@@ -182,6 +182,7 @@ void patent()
     pregel_owcty("/scc/patent", "/sccexp/patent/owcty");
     scc_minlabel("/sccexp/patent/owcty", "/sccexp/patent/minlabel");
     scc_minGDecom("/sccexp/patent/minlabel", "/sccexp/patent/output1");
+
 }
 void multi_patent()
 {
@@ -200,12 +201,15 @@ void multi_patent()
     scc_multilabel("/sccmulexp/patent/owcty", "/sccmulexp/patent/minlabel");
     scc_multiGDecom("/sccmulexp/patent/minlabel", "/sccmulexp/patent/output2");
 
-    if (_my_rank == 0)
+    
+    if(_my_rank == 0)
         cout << "Third Round" << endl;
 
     pregel_owcty("/sccmulexp/patent/output2", "/sccmulexp/patent/owcty");
     scc_multilabel("/sccmulexp/patent/owcty", "/sccmulexp/patent/minlabel");
     scc_multiGDecom("/sccmulexp/patent/minlabel", "/sccmulexp/patent/output3");
+
+
 }
 void pokec()
 {
@@ -215,6 +219,7 @@ void pokec()
     pregel_owcty("/scc/pokec", "/sccexp/pokec/owcty");
     scc_minlabel("/sccexp/pokec/owcty", "/sccexp/pokec/minlabel");
     scc_minGDecom("/sccexp/pokec/minlabel", "/sccexp/pokec/output1");
+
 }
 void multi_pokec()
 {
@@ -233,13 +238,17 @@ void multi_pokec()
     scc_multilabel("/sccmulexp/pokec/owcty", "/sccmulexp/pokec/minlabel");
     scc_multiGDecom("/sccmulexp/pokec/minlabel", "/sccmulexp/pokec/output2");
 
-    if (_my_rank == 0)
+    
+    if(_my_rank == 0)
         cout << "Third Round" << endl;
 
     pregel_owcty("/sccmulexp/pokec/output2", "/sccmulexp/pokec/owcty");
     scc_multilabel("/sccmulexp/pokec/owcty", "/sccmulexp/pokec/minlabel");
     scc_multiGDecom("/sccmulexp/pokec/minlabel", "/sccmulexp/pokec/output3");
+
+
 }
+
 
 void flickr()
 {
@@ -256,6 +265,7 @@ void flickr()
     pregel_owcty("/sccexp/flickr/output1", "/sccexp/flickr/owcty");
     scc_minlabel("/sccexp/flickr/owcty", "/sccexp/flickr/minlabel");
     scc_minGDecom("/sccexp/flickr/minlabel", "/sccexp/flickr/output2");
+
 }
 
 void multi_flickr()
@@ -275,13 +285,17 @@ void multi_flickr()
     scc_multilabel("/sccmulexp/flickr/owcty", "/sccmulexp/flickr/minlabel");
     scc_multiGDecom("/sccmulexp/flickr/minlabel", "/sccmulexp/flickr/output2");
 
-    if (_my_rank == 0)
+    
+    if(_my_rank == 0)
         cout << "Third Round" << endl;
 
     pregel_owcty("/sccmulexp/flickr/output2", "/sccmulexp/flickr/owcty");
     scc_multilabel("/sccmulexp/flickr/owcty", "/sccmulexp/flickr/minlabel");
     scc_multiGDecom("/sccmulexp/flickr/minlabel", "/sccmulexp/flickr/output3");
+
+
 }
+
 
 int main(int argc, char* argv[])
 {
@@ -304,10 +318,12 @@ int main(int argc, char* argv[])
     LJ();
     */
 
+
     if (_my_rank == 0)
         cout << "patent SCC" << endl;
     multi_patent();
 
+  
     if (_my_rank == 0)
         cout << "pokec SCC" << endl;
     multi_pokec();
