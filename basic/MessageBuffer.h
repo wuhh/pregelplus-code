@@ -6,6 +6,7 @@
 #include "utils/Combiner.h"
 #include "utils/communication.h"
 #include "utils/vecs.h"
+#include <omp.h>
 using namespace std;
 
 template <class VertexT>
@@ -26,7 +27,15 @@ public:
     vector<VertexT*> to_add;
     vector<MessageContainerT> v_msg_bufs;
     HashT hash;
-
+    omp_lock_t add_message_mutex;
+    MessageBuffer()
+    {
+    	omp_init_lock(&add_message_mutex);
+    }
+    ~MessageBuffer()
+    {
+    	omp_destroy_lock(&add_message_mutex);
+    }
     void init(vector<VertexT*> vertexes)
     {
         v_msg_bufs.resize(vertexes.size());
@@ -46,8 +55,10 @@ public:
     }
     void add_message(const KeyT& id, const MessageT& msg)
     {
-        hasMsg(); //cannot end yet even every vertex halts
-        out_messages.append(id, msg);
+    	omp_set_lock(&add_message_mutex);
+    	hasMsg(); //cannot end yet even every vertex halts
+    	out_messages.append(id, msg);
+    	omp_unset_lock(&add_message_mutex);
     }
 
     Map& get_messages()
