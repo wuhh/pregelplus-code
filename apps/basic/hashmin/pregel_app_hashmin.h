@@ -1,4 +1,5 @@
 #include "basic/pregel-dev.h"
+#include <sstream>
 using namespace std;
 
 struct CCValue_pregel {
@@ -66,15 +67,15 @@ public:
     //C version
     virtual CCVertex_pregel* toVertex(char* line)
     {
-        char* pch;
-        pch = strtok(line, "\t");
         CCVertex_pregel* v = new CCVertex_pregel;
-        v->id = atoi(pch);
-        pch = strtok(NULL, " ");
-        int num = atoi(pch);
+        istringstream ssin(line); 
+        ssin >> v->id;
+        int num;
+        ssin >> num;
         for (int i = 0; i < num; i++) {
-            pch = strtok(NULL, " ");
-            v->value().edges.push_back(atoi(pch));
+            int nb;
+            ssin >> nb;
+            v->value().edges.push_back(nb);
         }
         return v;
     }

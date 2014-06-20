@@ -236,9 +236,8 @@ public:
     virtual VertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
 
 
-    void load_graph(const char* inpath)
+    void load_graph(const char* inpath, hdfsFS fs)
     {
-        hdfsFS fs = getHdfsFS();
         hdfsFile in = getRHandle(inpath, fs);
         LineReader reader(fs, in);
         while (true)
@@ -246,8 +245,9 @@ public:
             reader.readLine();
             if (!reader.eof())
             {
-            	VertexT* v = toVertex(reader.getLine());
-            	omp_set_lock(&load_vertex_mutex);
+            	char* ch = reader.getLine();
+                VertexT* v = toVertex(ch);
+                omp_set_lock(&load_vertex_mutex);
             	add_vertex(v);
             	omp_unset_lock(&load_vertex_mutex);
             }
@@ -255,23 +255,18 @@ public:
                 break;
         }
         hdfsCloseFile(fs, in);
-        hdfsDisconnect(fs);
-        //cout<<"Worker "<<_my_rank<<": \""<<inpath<<"\" loaded"<<endl;//DEBUG !!!!!!!!!!
-    }
-    void test_function(int x)
-    {
-    	cout << x << endl;
     }
     void load_files(vector<string>& assignedSplits)
     {
+        hdfsFS fs = getHdfsFS();
     	omp_init_lock(&load_vertex_mutex);
-	#pragma omp parallel for
+	    #pragma omp parallel for
     	for(int i = 0 ; i < assignedSplits.size() ; i ++)
     	{
-    		load_graph(assignedSplits[i].c_str());
+    		load_graph(assignedSplits[i].c_str(),fs);
     	}
-        cout << "Worker: " << _my_rank << " finish loading graphs." << endl;
         omp_destroy_lock(&load_vertex_mutex);
+        hdfsDisconnect(fs);
     }
 
     //=======================================================
@@ -304,7 +299,6 @@ public:
                 exit(-1);
         }
         init_timers();
-
         //dispatch splits
         ResetTimer(WORKER_TIMER);
         vector<vector<string> >* arrangement;
@@ -327,13 +321,18 @@ public:
         }
 
         //send vertices according to hash_id (reduce)
+        StopTimer(WORKER_TIMER);
+        PrintTimer("Load Time", WORKER_TIMER);
+        
+        ResetTimer(WORKER_TIMER);
+        
         sync_graph();
 
         message_buffer->init(vertexes);
         //barrier for data loading
         worker_barrier(); //@@@@@@@@@@@@@
         StopTimer(WORKER_TIMER);
-        PrintTimer("Load Time", WORKER_TIMER);
+        PrintTimer("Sync Time", WORKER_TIMER);
 
         //=========================================================
 
