@@ -21,10 +21,9 @@ obinstream& operator>>(obinstream& m, CCValue_pregel& v)
 
 class CCVertex_pregel : public Vertex<VertexID, CCValue_pregel, VertexID> {
 public:
-
     virtual void compute(MessageContainer& messages)
     {
-    	vote_to_halt();
+        vote_to_halt();
     }
 };
 
@@ -40,7 +39,6 @@ public:
     {
     }
 };
-
 
 void pregel_hashmin(string in_path, string out_path, bool use_combiner)
 {
