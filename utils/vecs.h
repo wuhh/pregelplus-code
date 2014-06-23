@@ -92,6 +92,7 @@ public:
     void combine()
     {
         Combiner<MessageT>* combiner = (Combiner<MessageT>*)get_combiner();
+		#pragma omp parallel for
         for (int i = 0; i < np; i++) {
             sort(vecs[i].begin(), vecs[i].end());
             Vec newVec;

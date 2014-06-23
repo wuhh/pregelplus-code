@@ -55,7 +55,6 @@ public:
         aggregator = ag;
         global_aggregator = ag;
         global_agg = new FinalT;
-        omp_init_lock(&compute_mutex);
     }
 
     virtual ~Worker()
@@ -66,7 +65,6 @@ public:
         if (getAgg() != NULL)
             delete (FinalT*)global_agg;
         //worker_finalize();//put to run.cpp
-        omp_destroy_lock(&compute_mutex);
         worker_barrier(); //newly added for ease of multi-job programming in run.cpp
     }
 
@@ -108,6 +106,7 @@ public:
         active_count = 0;
         MessageBufT* mbuf = (MessageBufT*)get_message_buffer();
         vector<MessageContainerT>& v_msgbufs = mbuf->get_v_msg_bufs();
+
         for (int i = 0; i < vertexes.size(); i++)
         {
             if (v_msgbufs[i].size() == 0)
@@ -115,13 +114,14 @@ public:
                 if (vertexes[i]->is_active())
                 {
                     vertexes[i]->compute(v_msgbufs[i]);
-                    omp_set_lock(&compute_mutex);
-                    AggregatorT* agg = (AggregatorT*)get_aggregator();
-                    if (agg != NULL)
-                        agg->stepPartial(vertexes[i]);
-                    if (vertexes[i]->is_active())
-                        active_count++;
-                    omp_unset_lock(&compute_mutex);
+
+                    	AggregatorT* agg = (AggregatorT*)get_aggregator();
+                    	if (agg != NULL)
+                    		agg->stepPartial(vertexes[i]);
+                    	if (vertexes[i]->is_active())
+                    		active_count++;
+
+
                 }
             }
             else
@@ -129,13 +129,13 @@ public:
                 vertexes[i]->activate();
                 vertexes[i]->compute(v_msgbufs[i]);
                 v_msgbufs[i].clear(); //clear used msgs
-                omp_set_lock(&compute_mutex);
-                AggregatorT* agg = (AggregatorT*)get_aggregator();
-                if (agg != NULL)
-                    agg->stepPartial(vertexes[i]);
-                if (vertexes[i]->is_active())
-                    active_count++;
-                omp_unset_lock(&compute_mutex);
+
+                	AggregatorT* agg = (AggregatorT*)get_aggregator();
+                	if (agg != NULL)
+                		agg->stepPartial(vertexes[i]);
+                	if (vertexes[i]->is_active())
+                		active_count++;
+
             }
         }
     }
@@ -145,19 +145,21 @@ public:
         active_count = 0;
         MessageBufT* mbuf = (MessageBufT*)get_message_buffer();
         vector<MessageContainerT>& v_msgbufs = mbuf->get_v_msg_bufs();
-		#pragma omp parallel for
+
         for (int i = 0; i < vertexes.size(); i++)
         {
             vertexes[i]->activate();
             vertexes[i]->compute(v_msgbufs[i]);
             v_msgbufs[i].clear(); //clear used msgs
-            omp_set_lock(&compute_mutex);
-            AggregatorT* agg = (AggregatorT*)get_aggregator();
-            if (agg != NULL)
-                agg->stepPartial(vertexes[i]);
-            if (vertexes[i]->is_active())
-                active_count++;
-            omp_unset_lock(&compute_mutex);
+
+
+            	AggregatorT* agg = (AggregatorT*)get_aggregator();
+            	if (agg != NULL)
+            		agg->stepPartial(vertexes[i]);
+            	if (vertexes[i]->is_active())
+            		active_count++;
+
+
         }
     }
 
@@ -256,9 +258,10 @@ public:
             {
             	char* ch = reader.getLine();
                 VertexT* v = toVertex(ch);
-                omp_set_lock(&load_vertex_mutex);
-            	add_vertex(v);
-            	omp_unset_lock(&load_vertex_mutex);
+				#pragma omp critical
+                {
+                	add_vertex(v);
+                }
             }
             else
                 break;
@@ -268,13 +271,11 @@ public:
     void load_files(vector<string>& assignedSplits)
     {
         hdfsFS fs = getHdfsFS();
-    	omp_init_lock(&load_vertex_mutex);
 	    #pragma omp parallel for
     	for(int i = 0 ; i < assignedSplits.size() ; i ++)
     	{
     		load_graph(assignedSplits[i].c_str(),fs);
     	}
-        omp_destroy_lock(&load_vertex_mutex);
         hdfsDisconnect(fs);
     }
 
@@ -868,8 +869,6 @@ public:
     }
 
 private:
-    omp_lock_t load_vertex_mutex;
-    omp_lock_t compute_mutex;
     HashT hash;
     VertexContainer vertexes;
     int active_count;
