@@ -258,10 +258,10 @@ public:
             {
             	char* ch = reader.getLine();
                 VertexT* v = toVertex(ch);
-				#pragma omp critical
-                {
+				//#pragma omp critical
+                //{
                 	add_vertex(v);
-                }
+                //}
             }
             else
                 break;
@@ -271,7 +271,7 @@ public:
     void load_files(vector<string>& assignedSplits)
     {
         hdfsFS fs = getHdfsFS();
-	    #pragma omp parallel for
+	    //#pragma omp parallel for
     	for(int i = 0 ; i < assignedSplits.size() ; i ++)
     	{
     		load_graph(assignedSplits[i].c_str(),fs);
