@@ -55,7 +55,7 @@ public:
     		{
     			send_message(edges[i],id);
     		}
-    		value().K = globalK;
+    		value().K = globalK-1;
     		value().edges.clear();
         	vote_to_halt();
     	}
