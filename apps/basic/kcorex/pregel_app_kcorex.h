@@ -30,72 +30,63 @@ obinstream& operator>>(obinstream& m, kcorexValue& v)
 //====================================
 bool intpaircmp(const intpair& p1, const intpair& p2)
 {
-	return p1.v1 < p2.v1; //id
+    return p1.v1 < p2.v1; //id
 }
 class kcorexVertex : public Vertex<VertexID, kcorexValue, intpair> {
 public:
+    int subfunc(kcorexVertex* v)
+    {
+        vector<VertexID>& edges = v->value().edges;
+        vector<int>& p = v->value().p;
+        int& K = v->value().K;
 
-	int subfunc(kcorexVertex* v)
-	{
-		vector<VertexID>& edges = v->value().edges;
-		vector<int>& p = v->value().p;
-		int& K = v->value().K;
+        vector<int> cd(K + 2, 0);
 
-		vector<int> cd(K+2,0);
-
-		for(int i = 0; i < edges.size(); i ++)
-		{
-			if(p[i] > K)
-				p[i] = K;
-			cd[p[i]] ++;
-		}
-		for(int i = K ; i >= 1 ; i --)
-		{
-			cd[i] += cd[i+1];
-			if(cd[i] >= i)
-				return i;
-		}
-		assert(0);
-	}
+        for (int i = 0; i < edges.size(); i++) {
+            if (p[i] > K)
+                p[i] = K;
+            cd[p[i]]++;
+        }
+        for (int i = K; i >= 1; i--) {
+            cd[i] += cd[i + 1];
+            if (cd[i] >= i)
+                return i;
+        }
+        assert(0);
+    }
     virtual void compute(MessageContainer& messages)
     {
-    	vector<VertexID>& edges = value().edges;
-    	vector<int>& p = value().p;
-    	int& K = value().K;
-    	if(step_num() == 1)
-    	{
-    		sort(edges.begin(),edges.end());
-    		p = vector<int>(edges.size(),inf);
-    		for(int i = 0; i < edges.size(); i ++)
-    		{
-    			send_message(edges[i],intpair(id,K));
-    		}
-    	}
-    	else
-    	{
-    		sort(messages.begin(),messages.end(),intpaircmp);
-    		// To be consistent with edges list;
-    		for(int i = 0;i < messages.size() ; i ++)
-    		{
-    			if( messages[i].v2 < p[i])
-    				p[i] = messages[i].v2;
-    		}
+        vector<VertexID>& edges = value().edges;
+        vector<int>& p = value().p;
+        int& K = value().K;
+        if (step_num() == 1) {
+            sort(edges.begin(), edges.end());
+            p = vector<int>(edges.size(), inf);
+            for (int i = 0; i < edges.size(); i++) {
+                send_message(edges[i], intpair(id, K));
+            }
+        } else {
+            sort(messages.begin(), messages.end(), intpaircmp);
+            // To be consistent with edges list;
+            for (int i = 0, j = 0; i < messages.size(); i++) {
+                while (edges[j] < messages[i].v1)
+                    j++;
+                if (messages[i].v2 < p[j])
+                    p[j] = messages[i].v2;
+            }
 
-    		int x = subfunc(this);//
+            int x = subfunc(this); //
 
-    		if(x < K)
-    		{
-    			K = x;
-    			for(int i = 0; i < edges.size(); i ++)
-    			{
-    				if(K < p[i])
-    				{
-    					send_message(edges[i],intpair(id,K));
-    				}
-    			}
-    		}
-    	}
-    	vote_to_halt();
+            if (x < K) {
+                K = x;
+                for (int i = 0; i < edges.size(); i++) {
+                    if (K < p[i]) {
+                        send_message(edges[i], intpair(id, K));
+                    }
+                }
+            }
+        }
+        vote_to_halt();
     }
 };
 
@@ -106,7 +97,7 @@ public:
     //C version
     virtual kcorexVertex* toVertex(char* line)
     {
-    	kcorexVertex* v = new kcorexVertex;
+        kcorexVertex* v = new kcorexVertex;
         istringstream ssin(line);
         ssin >> v->id;
         int num;
@@ -128,7 +119,6 @@ public:
     }
 };
 
-
 void pregel_kcorex(string in_path, string out_path)
 {
     WorkerParams param;
@@ -140,4 +130,3 @@ void pregel_kcorex(string in_path, string out_path)
 
     worker.run(param);
 }
-

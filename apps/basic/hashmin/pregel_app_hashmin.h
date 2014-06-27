@@ -68,7 +68,7 @@ public:
     virtual CCVertex_pregel* toVertex(char* line)
     {
         CCVertex_pregel* v = new CCVertex_pregel;
-        istringstream ssin(line); 
+        istringstream ssin(line);
         ssin >> v->id;
         int num;
         ssin >> num;

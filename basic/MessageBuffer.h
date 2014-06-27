@@ -47,9 +47,8 @@ public:
     void add_message(const KeyT& id, const MessageT& msg)
     {
 
-    	hasMsg(); //cannot end yet even every vertex halts
-    	out_messages.append(id, msg);
-
+        hasMsg(); //cannot end yet even every vertex halts
+        out_messages.append(id, msg);
     }
 
     Map& get_messages()
