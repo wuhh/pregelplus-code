@@ -39,6 +39,9 @@ public:
             return;
         } else if (step_num() == 2) {
             currentT = *((int*)getAgg());
+            while (phase_num() > 1 && value().static_edges.size() > 0 && value().static_edges.back().v2 == currentT)
+                value().static_edges.pop_back();
+            value().edges = value().static_edges;
             return;
         }
         vector<intpair> newEdges;
@@ -60,8 +63,13 @@ public:
             for (int i = 0; i < edges.size(); i++) {
                 send_message(edges[i].v1, id);
             }
-            if (value().K.size() == 0 || globalK - 1 != value().K.back().v1) {
+            if (value().K.size() == 0) {
                 value().K.push_back(intpair(globalK - 1, currentT));
+            } else {
+                if (globalK - 1 == value().K.back().v1)
+                    value().K.back().v2 = currentT;
+                else
+                    value().K.push_back(intpair(globalK - 1, currentT));
             }
             value().edges.clear();
             vote_to_halt();
@@ -77,14 +85,9 @@ private:
 public:
     virtual void init()
     {
-        if (step_num() == 1) {
+        if (step_num() <= 2) {
             currentT = inf;
-        } else if (step_num() == 2) {
-            currentT = *((int*)getAgg());
             K = 1;
-            if (currentT == inf)
-                forceTerminate();
-            cout << "hi yanda: " << currentT << endl;
         } else {
             K = *((int*)getAgg());
             allLessK = true;
@@ -93,16 +96,10 @@ public:
 
     virtual void stepPartial(kcoreT1Vertex* v)
     {
-        if (step_num() == 1) {
+        if (step_num() <= 2) {
             if (v->value().static_edges.size() != 0) {
                 currentT = min(currentT, v->value().static_edges.back().v2);
             }
-        } else if (step_num() == 2) {
-            while (phase_num() > 1 && v->value().static_edges.size() > 0 && v->value().static_edges.back().v2 == currentT)
-                v->value().static_edges.pop_back();
-            v->value().edges = v->value().static_edges;
-            if (v->value().edges.size() > 0)
-                currentT = min(currentT, v->value().edges.back().v2);
         } else {
             if (v->value().edges.size() < K)
                 allLessK = false;
@@ -111,7 +108,7 @@ public:
 
     virtual void stepFinal(int* part)
     {
-        if (step_num() == 1 || step_num() == 2) {
+        if (step_num() <= 2) {
             currentT = min(currentT, *part);
         } else {
             allLessK = *part && allLessK;
@@ -120,10 +117,8 @@ public:
 
     virtual int* finishPartial()
     {
-        if (step_num() == 1) {
+        if (step_num() <= 2) {
             return &currentT;
-        } else if (step_num() == 2) {
-            return &K;
         } else {
             return &allLessK;
         }
@@ -135,6 +130,8 @@ public:
         } else if (step_num() == 2) {
             if (_my_rank == 0)
                 cout << "Current T: " << currentT << endl;
+            if (currentT == inf)
+                forceTerminate();
             return &K;
         } else {
             if (allLessK)
@@ -172,12 +169,13 @@ public:
 
     virtual void toline(kcoreT1Vertex* v, BufferedWriter& writer)
     {
-        sprintf(buf, "%d\t", v->id);
+        sprintf(buf, "%d", v->id);
         writer.write(buf);
         for (int i = 0; i < v->value().K.size(); i++) {
-            sprintf(buf, " %d %d", v->value().K[i].v1, v->value().K[i].v2);
+            sprintf(buf, "%s%d %d", i == 0 ? "\t" : " ", v->value().K[i].v1, v->value().K[i].v2);
             writer.write(buf);
         }
+        writer.write("\n");
     }
 };
 

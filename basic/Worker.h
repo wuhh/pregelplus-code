@@ -418,7 +418,7 @@ public:
         init_timers();
         ResetTimer(WORKER_TIMER);
         bool terminate = false;
-        for (global_phase_num = 1; global_phase_num <= num_phases && !terminate; global_phase_num++) {
+        for (global_phase_num = 1; global_phase_num <= num_phases; global_phase_num++) {
             if (_my_rank == MASTER_RANK)
                 cout << "################ Phase " << global_phase_num << " ################" << endl;
 
@@ -511,6 +511,8 @@ public:
                 cout << "************ Phase " << global_phase_num << " done. ************" << endl;
                 cout << "Total #msgs=" << global_msg_num << ", Total #vadd=" << global_vadd_num << endl;
             }
+            if (terminate)
+                break;
         }
         worker_barrier();
         StopTimer(WORKER_TIMER);
