@@ -43,6 +43,8 @@ public:
                 value().static_edges.pop_back();
             value().edges = value().static_edges;
             return;
+        } else if (step_num() == 3) {
+            currentT = *((int*)getAgg());
         }
         vector<intpair> newEdges;
         vector<intpair>& edges = value().edges;
@@ -63,15 +65,13 @@ public:
             for (int i = 0; i < edges.size(); i++) {
                 send_message(edges[i].v1, id);
             }
-            if (globalK - 1 != 0) {
-                if (value().K.size() == 0) {
+            if (value().K.size() == 0) {
+                value().K.push_back(intpair(globalK - 1, currentT));
+            } else {
+                if (globalK - 1 == value().K.back().v1)
+                    value().K.back().v2 = currentT;
+                else
                     value().K.push_back(intpair(globalK - 1, currentT));
-                } else {
-                    if (globalK - 1 == value().K.back().v1)
-                        value().K.back().v2 = currentT;
-                    else
-                        value().K.push_back(intpair(globalK - 1, currentT));
-                }
             }
             value().edges.clear();
             vote_to_halt();
@@ -87,13 +87,13 @@ private:
 public:
     virtual void init()
     {
-        if (step_num() <= 2) {
+        if (step_num() <= 3) {
             currentT = inf;
             K = 1;
         } else {
             K = *((int*)getAgg());
-            allLessK = true;
         }
+        allLessK = true;
     }
 
     virtual void stepPartial(kcoreT1Vertex* v)
