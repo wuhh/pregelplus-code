@@ -58,18 +58,20 @@ public:
 
         /* calculate k-core */
 
-        int globalK = *((int*)getAgg());
+        int globalK = step_num() == 3 ? 1 : *((int*)getAgg());
         if (edges.size() < globalK) {
             for (int i = 0; i < edges.size(); i++) {
                 send_message(edges[i].v1, id);
             }
-            if (value().K.size() == 0) {
-                value().K.push_back(intpair(globalK - 1, currentT));
-            } else {
-                if (globalK - 1 == value().K.back().v1)
-                    value().K.back().v2 = currentT;
-                else
+            if (globalK - 1 != 0) {
+                if (value().K.size() == 0) {
                     value().K.push_back(intpair(globalK - 1, currentT));
+                } else {
+                    if (globalK - 1 == value().K.back().v1)
+                        value().K.back().v2 = currentT;
+                    else
+                        value().K.push_back(intpair(globalK - 1, currentT));
+                }
             }
             value().edges.clear();
             vote_to_halt();
@@ -132,7 +134,7 @@ public:
                 cout << "Current T: " << currentT << endl;
             if (currentT == inf)
                 forceTerminate();
-            return &K;
+            return &currentT;
         } else {
             if (allLessK)
                 K += 1;
