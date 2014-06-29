@@ -174,8 +174,10 @@ public:
         sprintf(buf, "%d", v->id);
         writer.write(buf);
         for (int i = 0; i < v->value().K.size(); i++) {
-            sprintf(buf, "%s%d %d", i == 0 ? "\t" : " ", v->value().K[i].v1, v->value().K[i].v2);
-            writer.write(buf);
+            if (v->value().K[i].v1 != 0) {
+                sprintf(buf, "%s%d %d", i == 0 ? "\t" : " ", v->value().K[i].v1, v->value().K[i].v2);
+                writer.write(buf);
+            }
         }
         writer.write("\n");
     }
