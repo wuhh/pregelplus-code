@@ -183,7 +183,17 @@ struct LineReader {
         return length == 0 && fileEnd;
     }
 };
-
+//====== Dir Creation ======
+void dirCreate(const char* outdir)
+{
+    hdfsFS fs = getHdfsFS();
+    int created = hdfsCreateDirectory(fs, outdir);
+	if (created == -1) {
+		fprintf(stderr, "Failed to create folder %s!\n", outdir);
+		exit(-1);
+	}
+    hdfsDisconnect(fs);
+}
 //====== Dir Check ======
 int dirCheck(const char* indir, const char* outdir, bool print, bool force) //returns -1 if fail, 0 if succeed
 {
