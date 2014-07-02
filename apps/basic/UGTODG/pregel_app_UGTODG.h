@@ -63,13 +63,35 @@ public:
     virtual void toline(UGTODGVertex_pregel* v, BufferedWriter& writer)
     {
         vector<intpair>& nbs = v->value().edges;
-        sprintf(buf, "%d\t%d", v->id, nbs.size());
-        writer.write(buf);
+        vector<VertexID> inv,outv;
+        for(int i = 0 ;i < nbs.size() ;i ++)
+        {
+            if(nbs[i].v2 == 1)
+            {
+                outv.push_back(nbs[i].v1);
+            }
+            else
+            {
+                inv.push_back(nbs[i].v1);
+            }
+        }
 
-        for (int i = 0; i < nbs.size(); i++) {
-            sprintf(buf, " %d %d", nbs[i].v1, nbs[i].v2);
+        sprintf(buf, "%d\t%d", v->id, inv.size());
+        writer.write(buf);
+        
+        for (int i = 0; i < inv.size(); i++) {
+            sprintf(buf, " %d", inv[i]);
             writer.write(buf);
         }
+        
+        sprintf(buf, " %d", outv.size());
+        writer.write(buf);
+         
+        for (int i = 0; i < outv.size(); i++) {
+            sprintf(buf, " %d", outv[i]);
+            writer.write(buf);
+        }
+        
 
         writer.write("\n");
     }

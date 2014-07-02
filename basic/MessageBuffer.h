@@ -6,7 +6,6 @@
 #include "utils/Combiner.h"
 #include "utils/communication.h"
 #include "utils/vecs.h"
-#include <omp.h>
 using namespace std;
 
 template <class VertexT>

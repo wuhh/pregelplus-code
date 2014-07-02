@@ -9,7 +9,6 @@
 #include "utils/ydhdfs.h"
 #include "utils/Combiner.h"
 #include "utils/Aggregator.h"
-#include <omp.h>
 using namespace std;
 
 template <class VertexT, class AggregatorT = DummyAgg> //user-defined VertexT
