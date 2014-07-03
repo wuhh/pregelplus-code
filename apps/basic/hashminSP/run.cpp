@@ -1,8 +1,8 @@
-#include "pregel_app_hashmin.h"
+#include "pregel_app_hashminSP.h"
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_hashmin("/pullgel/friend", "/exp/cc", true);
+    pregel_hashminSP("/pullgel/friend", "/exp/cc", true);
     worker_finalize();
     return 0;
 }

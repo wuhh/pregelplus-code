@@ -292,11 +292,6 @@ public:
         }
 
         //send vertices according to hash_id (reduce)
-        worker_barrier(); //@@@@@@@@@@@@@
-        StopTimer(WORKER_TIMER);
-        PrintTimer("Load Time", WORKER_TIMER);
-
-        ResetTimer(WORKER_TIMER);
 
         sync_graph();
 
@@ -304,7 +299,7 @@ public:
         //barrier for data loading
         worker_barrier(); //@@@@@@@@@@@@@
         StopTimer(WORKER_TIMER);
-        PrintTimer("Sync Time", WORKER_TIMER);
+        PrintTimer("Load Time", WORKER_TIMER);
 
         //=========================================================
 
