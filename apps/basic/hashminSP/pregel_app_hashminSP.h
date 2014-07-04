@@ -168,7 +168,7 @@ public:
     virtual int* finishFinal()
     {
         // hard code for random pivot;
-        VertexToPick = 15588959; 
+//        VertexToPick = 15588959; 
         if(phase_num() == 1 &&  step_num() == 1)
         {
             cout << VertexToPick << " is picked up as a pivot" << endl;
@@ -200,6 +200,7 @@ public:
             pch = strtok(NULL, " ");
             v->value().edges.push_back(atoi(pch));
         }
+        v->value().color = v->id;
         return v;
     }
 
