@@ -43,7 +43,6 @@ obinstream& operator>>(obinstream& m, ColorAggType& v)
     m >> v.phase;
     return m;
 }
-int VertexThreshold;
 class ColorVertex_pregel : public Vertex<VertexID, ColorValue_pregel, VertexID> {
 public:
     void broadcast(VertexID msg)
