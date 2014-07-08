@@ -4,8 +4,7 @@ using namespace std;
 
 const int EdgeThreshold = 5000000;
 
-struct ColorValue_pregel
-{
+struct ColorValue_pregel {
     int color; // -1 not assigned, -2 tentative, selected, -3 in MIS
     vector<VertexID> edges;
     vector<VertexID> static_edges;
@@ -35,21 +34,18 @@ double myrand()
 
 class ColorVertex_pregel; // forward declaration
 
-struct ColorAggType
-{
+struct ColorAggType {
     long long activeEdge;
     vector<ColorVertex_pregel> graph;
-    hash_map<int,int> colormap;
+    hash_map<int, int> colormap;
 };
 
-class ColorVertex_pregel : public Vertex<VertexID, ColorValue_pregel, VertexID>
-{
+class ColorVertex_pregel : public Vertex<VertexID, ColorValue_pregel, VertexID> {
 public:
     void broadcast(VertexID msg)
     {
         vector<VertexID>& nbs = value().edges;
-        for (int i = 0; i < nbs.size(); i++)
-        {
+        for (int i = 0; i < nbs.size(); i++) {
             send_message(nbs[i], msg);
         }
     }
@@ -58,39 +54,29 @@ public:
     {
         ColorAggType* aggValue = (ColorAggType*)getAgg();
 
-        if(step_num() % 3 == 1 && aggValue->activeEdge <= EdgeThreshold)
-        {
+        if (step_num() % 3 == 1 && aggValue->activeEdge <= EdgeThreshold) {
             // for Agg FCS
             return;
-        }
-        else if(step_num() % 3 == 2 && aggValue->activeEdge == -1)
-        {
+        } else if (step_num() % 3 == 2 && aggValue->activeEdge == -1) {
             value().color = aggValue->colormap[id];
-            for(int i = 0 ;i < value().static_edges.size() ;i ++)
-            {
-            	send_message(value().static_edges[i], value().color);
+            for (int i = 0; i < value().static_edges.size(); i++) {
+                send_message(value().static_edges[i], value().color);
             }
 
             vote_to_halt();
             return;
-        }
-
-        else if(step_num() % 3 == 0 && aggValue->activeEdge == -1)
-        {
-        	for(int i = 0 ;i < messages.size() ; i ++)
-        	{
-        		if(messages[i] == value().color)
-        		{
-        			assert(false);
-        		}
-        	}
-        	vote_to_halt();
-        	return;
+        } else if (step_num() % 3 == 0 && aggValue->activeEdge == -1) {
+            for (int i = 0; i < messages.size(); i++) {
+                if (messages[i] == value().color) {
+                    assert(false);
+                }
+            }
+            vote_to_halt();
+            return;
         }
         // all active unless be assigned with a color
         vector<VertexID>& nbs = value().edges;
-        if (step_num() % 3 == 1)
-        {
+        if (step_num() % 3 == 1) {
 
             int degree = nbs.size();
             bool selected;
@@ -100,53 +86,40 @@ public:
             else
                 selected = myrand() < (1.0 / (2 * degree));
 
-            if (selected)
-            {
+            if (selected) {
                 value().color = -2;
                 broadcast(id);
             }
 
-        }
-        else if (step_num() % 3 == 2)
-        {
-            if (value().color == -1)
-            {
+        } else if (step_num() % 3 == 2) {
+            if (value().color == -1) {
                 return;
             }
 
             VertexID min = id;
 
-            for (int i = 0; i < messages.size(); i++)
-            {
+            for (int i = 0; i < messages.size(); i++) {
                 if (messages[i] < min)
                     min = messages[i];
             }
-            if (min < id)
-            {
+            if (min < id) {
                 value().color = -1;
-            }
-            else
-            {
+            } else {
                 value().color = step_num() / 3;
                 broadcast(id);
                 nbs.clear();
                 vote_to_halt();
             }
-        }
-        else if (step_num() % 3 == 0)
-        {
+        } else if (step_num() % 3 == 0) {
             if (messages.size() == 0)
                 return;
             vector<VertexID> new_nbs;
             hash_set<VertexID> msg;
-            for (int i = 0; i < messages.size(); i++)
-            {
+            for (int i = 0; i < messages.size(); i++) {
                 msg.insert(messages[i]);
             }
-            for (int i = 0; i < nbs.size(); i++)
-            {
-                if (msg.count(nbs[i]) == 0)
-                {
+            for (int i = 0; i < nbs.size(); i++) {
+                if (msg.count(nbs[i]) == 0) {
                     new_nbs.push_back(nbs[i]);
                 }
             }
@@ -154,8 +127,6 @@ public:
         }
     }
 };
-
-
 
 ibinstream& operator<<(ibinstream& m, const ColorAggType& v)
 {
@@ -173,56 +144,48 @@ obinstream& operator>>(obinstream& m, ColorAggType& v)
     return m;
 }
 
-class ColorAgg_pregel : public Aggregator<ColorVertex_pregel, ColorAggType, ColorAggType>
-{
+class ColorAgg_pregel : public Aggregator<ColorVertex_pregel, ColorAggType, ColorAggType> {
 private:
     ColorAggType value;
     long long lastActiveEdge;
+
 public:
     virtual void init()
     {
         value.activeEdge = 0;
         value.graph.clear();
 
-        if(step_num() == 1)
-        {
+        if (step_num() == 1) {
             lastActiveEdge = EdgeThreshold + 1; // larger than EdgeThreshold
-        }
-        else if (step_num() % 3 == 1)
-        {
+        } else if (step_num() % 3 == 1) {
             lastActiveEdge = ((ColorAggType*)getAgg())->activeEdge;
         }
 
-        if(((ColorAggType*)getAgg())->colormap.size()!= 0)
-        {
-        	value.activeEdge = -1;
+        if (((ColorAggType*)getAgg())->colormap.size() != 0) {
+            value.activeEdge = -1;
         }
     }
 
     virtual void stepPartial(ColorVertex_pregel* v)
     {
-    	if(value.activeEdge  == -1)
-    		return;
-    	if (step_num() % 3 == 0)
-    	{
-    		value.activeEdge += v->value().edges.size();
-    	}
-    	if (step_num() % 3 == 1 && lastActiveEdge <=  EdgeThreshold)
-        {
+        if (value.activeEdge == -1)
+            return;
+        if (step_num() % 3 == 0) {
+            value.activeEdge += v->value().edges.size();
+        }
+        if (step_num() % 3 == 1 && lastActiveEdge <= EdgeThreshold) {
             value.graph.push_back(*v);
         }
-
     }
 
     virtual void stepFinal(ColorAggType* part)
     {
-    	if(part->activeEdge == -1)
-    	{
-    		 value.activeEdge = -1;
-    		 return;
-    	}
+        if (part->activeEdge == -1) {
+            value.activeEdge = -1;
+            return;
+        }
         value.activeEdge += part->activeEdge;
-        value.graph.insert(value.graph.end(), part->graph.begin(),part->graph.end());
+        value.graph.insert(value.graph.end(), part->graph.begin(), part->graph.end());
     }
 
     virtual ColorAggType* finishPartial()
@@ -231,57 +194,41 @@ public:
     }
     virtual ColorAggType* finishFinal()
     {
-        if(value.graph.size() != 0)
-        {
+        if (value.graph.size() != 0) {
             value.activeEdge = -1;
         }
         cout << step_num() << " " << value.activeEdge << endl;
         /*FCS*/
-        if(step_num() % 3 == 1 && lastActiveEdge <=  EdgeThreshold)
-        {
-            hash_map<int,int>& colormap = value.colormap;
+        if (step_num() % 3 == 1 && lastActiveEdge <= EdgeThreshold) {
+            hash_map<int, int>& colormap = value.colormap;
             int latestColor = (step_num() + 2) / 3;
-            for(int i = 0; i < value.graph.size() ; i ++)
-            {
+            for (int i = 0; i < value.graph.size(); i++) {
                 vector<int> neighborColors;
-                for(int j = 0 ; j < value.graph[i].value().edges.size(); j ++)
-                {
+                for (int j = 0; j < value.graph[i].value().edges.size(); j++) {
                     int nid = value.graph[i].value().edges[j];
-                    if(colormap.count(nid) != 0)
-                    {
+                    if (colormap.count(nid) != 0) {
                         neighborColors.push_back(colormap[nid]);
                     }
                 }
-                sort(neighborColors.begin(),neighborColors.end());
+                sort(neighborColors.begin(), neighborColors.end());
                 int previousNeighborColor = -1;
 
-                for (int j = 0 ;j < neighborColors.size(); j ++)
-                {
-                	int neigborColor = neighborColors[j];
-                    if (previousNeighborColor < 0)
-                    {
+                for (int j = 0; j < neighborColors.size(); j++) {
+                    int neigborColor = neighborColors[j];
+                    if (previousNeighborColor < 0) {
                         previousNeighborColor = neigborColor;
-                    }
-                    else if (previousNeighborColor == neigborColor)
-                    {
+                    } else if (previousNeighborColor == neigborColor) {
                         continue;
-                    }
-                    else if (neigborColor == (previousNeighborColor + 1))
-                    {
+                    } else if (neigborColor == (previousNeighborColor + 1)) {
                         previousNeighborColor = neigborColor;
-                    }
-                    else
-                    {
+                    } else {
                         break;
                     }
                 }
-                if (previousNeighborColor == -1)
-                {
-                	colormap[value.graph[i].id] = latestColor;
-                }
-                else
-                {
-                	colormap[value.graph[i].id] = previousNeighborColor + 1;
+                if (previousNeighborColor == -1) {
+                    colormap[value.graph[i].id] = latestColor;
+                } else {
+                    colormap[value.graph[i].id] = previousNeighborColor + 1;
                 }
             }
         }
@@ -289,8 +236,7 @@ public:
     }
 };
 
-class ColorWorker_pregel : public Worker<ColorVertex_pregel, ColorAgg_pregel>
-{
+class ColorWorker_pregel : public Worker<ColorVertex_pregel, ColorAgg_pregel> {
     char buf[100];
 
 public:
@@ -303,8 +249,7 @@ public:
         v->id = atoi(pch);
         pch = strtok(NULL, " ");
         int num = atoi(pch);
-        for (int i = 0; i < num; i++)
-        {
+        for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             if (v->id != atoi(pch))
                 v->value().edges.push_back(atoi(pch));

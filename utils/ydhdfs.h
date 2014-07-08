@@ -188,10 +188,10 @@ void dirCreate(const char* outdir)
 {
     hdfsFS fs = getHdfsFS();
     int created = hdfsCreateDirectory(fs, outdir);
-	if (created == -1) {
-		fprintf(stderr, "Failed to create folder %s!\n", outdir);
-		exit(-1);
-	}
+    if (created == -1) {
+        fprintf(stderr, "Failed to create folder %s!\n", outdir);
+        exit(-1);
+    }
     hdfsDisconnect(fs);
 }
 //====== Dir Check ======

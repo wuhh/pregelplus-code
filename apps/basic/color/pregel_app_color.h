@@ -96,50 +96,34 @@ public:
 class ColorAgg_pregel : public Aggregator<ColorVertex_pregel, int, int> {
 private:
     int sum;
-    int add;
 
 public:
     virtual void init()
     {
-        if (step_num() == 1)
-            sum = 0;
-        else
-            sum = *(int*)getAgg();
-        add = 0;
+        sum = 0;
     }
 
     virtual void stepPartial(ColorVertex_pregel* v)
     {
-        if (step_num() % 3 == 2) {
-            if (v->value().color >= 0) {
-                add++;
-            }
-        }
+        if (v->value().color == -1)
+            sum++;
     }
 
     virtual void stepFinal(int* part)
     {
-        if (step_num() % 3 == 2) {
-            add += *part;
-        }
+        sum += *part;
     }
 
     virtual int* finishPartial()
     {
-        return &add;
+        return &sum;
     }
     virtual int* finishFinal()
     {
-        if (step_num() % 3 == 2) {
-            sum += add;
-            cout << sum << " vertices have been assigned color " << step_num() / 3 << endl;
-            cout << get_vnum() - sum << " vertices need to assign a color " << endl;
-        }
-        cout << "active: " << active_vnum() << endl;
+        cout << "active: " << sum << endl;
         return &sum;
     }
 };
-
 class ColorWorker_pregel : public Worker<ColorVertex_pregel, ColorAgg_pregel> {
     char buf[100];
 
