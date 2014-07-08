@@ -246,7 +246,6 @@ public:
                 else  if (superstep % 4 == 2)
                 {
                     left.clear();
-                    cout << "right size: " << right.size() << endl;
                     for(int i = 0 ;i < graph.size() ; i ++)
                     {
                         BipartiteMatchingVertex& vertex =  graph[i];
@@ -282,10 +281,10 @@ public:
                             {
                                 vector<int> grants;
                                 vector<int>& messages = left[vertex.id];
-                                for (int i = 0; i < messages.size(); i++)
+                                for (int j = 0; j < messages.size(); j++)
                                 {
-                                    if (messages[i] >= 0)
-                                        grants.push_back(messages[i]);
+                                    if (messages[j] >= 0)
+                                        grants.push_back(messages[j]);
                                 }
                                 if (grants.size() > 0)
                                 {
