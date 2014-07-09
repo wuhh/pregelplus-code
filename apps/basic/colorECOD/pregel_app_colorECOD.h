@@ -72,7 +72,7 @@ public:
     {
         ColorAggType* agg = (ColorAggType*)getAgg();
         vector<VertexID>& nbs = value().edges;
-        if (agg->phase == 0) {
+        if (step_num() == 1 || agg->phase == 0) {
             if (value().color >= 0) {
                 return;
             }
