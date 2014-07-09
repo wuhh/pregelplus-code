@@ -176,6 +176,7 @@ public:
         cout << step_num() << " " << value.activeEdge << endl;
         /*FCS*/
         if (step_num() % 3 == 1 && lastActiveEdge <= EdgeThreshold) {
+            cout << "Graph Size: " << value.graph.size() << endl;
             hash_map<int, int>& colormap = value.colormap;
             int latestColor = (step_num() + 2) / 3;
             for (int i = 0; i < value.graph.size(); i++) {
@@ -207,6 +208,7 @@ public:
                     colormap[value.graph[i].id] = previousNeighborColor + 1;
                 }
             }
+            cout << "Result Size: " << colormap.size() << endl;
         }
         return &value;
     }
