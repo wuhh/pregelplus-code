@@ -158,7 +158,6 @@ public:
         switch(agg->phase)
         {
         case DistributedMinEdgePicking_LocalPickingAndSendToRoot:
-        	cout << "@@@@ " << id << " " << type << endl;
             if(type == PointsAtSupervertex && edges.size() > 0)
             {
                 inttriplet edge = minElement(edges);
