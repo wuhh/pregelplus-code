@@ -168,26 +168,26 @@ public:
         case DistributedMinEdgePicking_RootPickMinEdge:
             if(type == SuperVertex)
             {
-            	inttriplet minEdge = minElement(edges,messages);
+                inttriplet minEdge = minElement(edges,messages);
                 sendMsg(minEdge.v2, id); // request root;
                 output.push_back(minEdge);
             }
             break;
         case DistributedMinEdgePicking_RespondEdgeRoot:
-        	for(int i = 0 ;i < messages.size() ; i ++)
-        	{
-        		sendMsg(messages[i].v1, root);
-        	}
+            for(int i = 0 ;i < messages.size() ; i ++)
+            {
+                sendMsg(messages[i].v1, root);
+            }
             break;
         case DistributedMinEdgePicking_Finalize:
-        	if(type == SuperVertex)
-        	{
-        		inttriplet minEdge = output.back();
-        		assert(messages.size() == 1);
-        		sendMsg(messages[0].v1, id);
-        		root = messages[0].v1;
-        	}
-        	break;
+            if(type == SuperVertex)
+            {
+                inttriplet minEdge = output.back();
+                assert(messages.size() == 1);
+                sendMsg(messages[0].v1, id);
+                root = messages[0].v1;
+            }
+            break;
         case Supervertex_Finding:
             if(type == SuperVertex)
             {
@@ -349,12 +349,10 @@ public:
                 if(value.ifPointsAtSupervertex == false)
                 {
                     value.phase = PointerJumping_Request;
-                    cout << "go to request" << endl;
                 }
                 else
                 {
-                	value.phase = (MSTPhase)((phase + 1) % 12);
-                    cout << "Skip pointer jumping" << endl;
+                    value.phase = (MSTPhase)((phase + 1) % 12);
                 }
             }
             else
@@ -423,3 +421,4 @@ void pregel_mst(string in_path, string out_path)
     worker.setAggregator(&agg);
     worker.run(param);
 }
+
