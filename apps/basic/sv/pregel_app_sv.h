@@ -344,15 +344,3 @@ void pregel_sv(string in_path, string out_path)
     worker.setAggregator(&agg);
     worker.run(param);
 }
-void pregel_sv_report(string in_path, string out_path, string report)
-{
-    WorkerParams param;
-    param.input_path = in_path;
-    param.output_path = out_path;
-    param.force_write = true;
-    param.native_dispatcher = false;
-    SVWorker_pregel worker;
-    SVAgg_pregel agg;
-    worker.setAggregator(&agg);
-    worker.run_report(param, report);
-}

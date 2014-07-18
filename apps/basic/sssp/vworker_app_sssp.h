@@ -173,9 +173,9 @@ public:
     }
 };
 
-void vworker_sssp(string in_path, string out_path, bool use_combiner)
+void vworker_sssp(int srcID, string in_path, string out_path, bool use_combiner)
 {
-    src = 0;
+    src = srcID;
 
     WorkerParams param;
     param.input_path = in_path;

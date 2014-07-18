@@ -44,9 +44,6 @@ public:
             }
         } else
             vote_to_halt();
-        if (id == 8737) {
-            cout << "step: " << step_num() << " " << value().pr << endl;
-        }
     }
 };
 
@@ -133,18 +130,3 @@ void pregel_pagerank(string in_path, string out_path, bool use_combiner)
     worker.run(param);
 }
 
-void pregel_pagerank_report(string in_path, string out_path, string report_path, bool use_combiner)
-{
-    WorkerParams param;
-    param.input_path = in_path;
-    param.output_path = out_path;
-    param.force_write = true;
-    param.native_dispatcher = false;
-    PRWorker_pregel worker;
-    PRCombiner_pregel combiner;
-    if (use_combiner)
-        worker.setCombiner(&combiner);
-    PRAgg_pregel agg;
-    worker.setAggregator(&agg);
-    worker.run_report(param, report_path);
-}

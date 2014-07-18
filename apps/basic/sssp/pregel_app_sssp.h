@@ -27,14 +27,12 @@ obinstream& operator>>(obinstream& m, SPEdge_pregel& v)
 
 struct SPValue_pregel {
     double dist;
-    int from;
     vector<SPEdge_pregel> edges;
 };
 
 ibinstream& operator<<(ibinstream& m, const SPValue_pregel& v)
 {
     m << v.dist;
-    m << v.from;
     m << v.edges;
     return m;
 }
@@ -42,43 +40,22 @@ ibinstream& operator<<(ibinstream& m, const SPValue_pregel& v)
 obinstream& operator>>(obinstream& m, SPValue_pregel& v)
 {
     m >> v.dist;
-    m >> v.from;
     m >> v.edges;
     return m;
 }
 
 //====================================
 
-struct SPMsg_pregel {
-    double dist;
-    int from;
-};
-
-ibinstream& operator<<(ibinstream& m, const SPMsg_pregel& v)
-{
-    m << v.dist;
-    m << v.from;
-    return m;
-}
-
-obinstream& operator>>(obinstream& m, SPMsg_pregel& v)
-{
-    m >> v.dist;
-    m >> v.from;
-    return m;
-}
 
 //====================================
 
-class SPVertex_pregel : public Vertex<VertexID, SPValue_pregel, SPMsg_pregel> {
+class SPVertex_pregel : public Vertex<VertexID, SPValue_pregel, double> {
 public:
     void broadcast()
     {
         vector<SPEdge_pregel>& nbs = value().edges;
         for (int i = 0; i < nbs.size(); i++) {
-            SPMsg_pregel msg;
-            msg.dist = value().dist + nbs[i].len;
-            msg.from = id;
+            double msg = value().dist + nbs[i].len;
             send_message(nbs[i].nb, msg);
         }
     }
@@ -88,33 +65,25 @@ public:
         if (step_num() == 1) {
             if (id == src) {
                 value().dist = 0;
-                value().from = -1;
                 broadcast();
             } else {
                 value().dist = DBL_MAX;
-                value().from = -1;
             }
         } else {
-            SPMsg_pregel min;
-            min.dist = DBL_MAX;
+            double dist = DBL_MAX;
             for (int i = 0; i < messages.size(); i++) {
-                SPMsg_pregel msg = messages[i];
-                if (min.dist > msg.dist) {
-                    min = msg;
+                if (dist > messages[i]) {
+                    dist = messages[i];
                 }
             }
-            if (min.dist < value().dist) {
-                value().dist = min.dist;
-                value().from = min.from;
+            if (dist < value().dist) {
+                value().dist = dist;
                 broadcast();
             }
         }
         vote_to_halt();
     }
 
-    virtual void print()
-    {
-    }
 };
 
 class SPWorker_pregel : public Worker<SPVertex_pregel> {
@@ -130,7 +99,6 @@ public:
         SPVertex_pregel* v = new SPVertex_pregel;
         int id = atoi(pch);
         v->id = id;
-        v->value().from = -1;
         if (id == src)
             v->value().dist = 0;
         else {
@@ -142,8 +110,9 @@ public:
         for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             int nb = atoi(pch);
-            pch = strtok(NULL, " ");
-            double len = atof(pch);
+           // pch = strtok(NULL, " ");
+           // double len = atof(pch);
+            double len = 1;
             SPEdge_pregel edge = { len, nb };
             v->value().edges.push_back(edge);
         }
@@ -155,18 +124,16 @@ public:
     virtual void toline(SPVertex_pregel* v, BufferedWriter& writer)
     {
         if (v->value().dist != DBL_MAX)
-            sprintf(buf, "%d\t%f %d\n", v->id, v->value().dist, v->value().from);
-        else
-            sprintf(buf, "%d\tunreachable\n", v->id);
+            sprintf(buf, "%d\t%f\n", v->id, v->value().dist);
         writer.write(buf);
     }
 };
 
-class SPCombiner_pregel : public Combiner<SPMsg_pregel> {
+class SPCombiner_pregel : public Combiner<double> {
 public:
-    virtual void combine(SPMsg_pregel& old, const SPMsg_pregel& new_msg)
+    virtual void combine(double& old, const double& new_msg)
     {
-        if (old.dist > new_msg.dist)
+        if (old > new_msg)
             old = new_msg;
     }
 };
