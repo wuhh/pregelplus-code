@@ -2,7 +2,7 @@
 #include <cmath>
 using namespace std;
 
-int DIAMETER = 13;
+int DIAMETER = 12;
 //helper function
 double myrand()
 {

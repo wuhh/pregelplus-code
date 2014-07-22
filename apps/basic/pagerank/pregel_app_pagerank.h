@@ -1,14 +1,17 @@
 #include "basic/pregel-dev.h"
+#include <cmath>
 using namespace std;
 
 struct PRValue_pregel {
     double pr;
+    double delta;
     vector<VertexID> edges;
 };
 
 ibinstream& operator<<(ibinstream& m, const PRValue_pregel& v)
 {
     m << v.pr;
+    m << v.delta;
     m << v.edges;
     return m;
 }
@@ -16,11 +19,33 @@ ibinstream& operator<<(ibinstream& m, const PRValue_pregel& v)
 obinstream& operator>>(obinstream& m, PRValue_pregel& v)
 {
     m >> v.pr;
+    m >> v.delta;
     m >> v.edges;
     return m;
 }
 
 //====================================
+
+struct PRAggType
+{
+    double sum;
+    int converge;
+};
+
+ibinstream& operator<<(ibinstream& m, const PRAggType& v)
+{
+    m << v.sum;
+    m << v.converge;
+    return m;
+}
+
+obinstream& operator>>(obinstream& m, PRAggType& v)
+{
+    m >> v.sum;
+    m >> v.converge;
+    return m;
+}
+
 
 class PRVertex_pregel : public Vertex<VertexID, PRValue_pregel, double> {
 public:
@@ -33,11 +58,12 @@ public:
             for (MessageIter it = messages.begin(); it != messages.end(); it++) {
                 sum += *it;
             }
-            double* agg = (double*)getAgg();
-            double residual = *agg / get_vnum() * 0;
+            PRAggType* agg = (PRAggType*)getAgg();
+            double residual = agg->sum / get_vnum();
+            value().delta = fabs(value().pr - (0.15 + 0.85 * (sum + residual)));
             value().pr = 0.15 + 0.85 * (sum + residual);
         }
-        if (step_num() < ROUND) {
+        if (true || step_num() < ROUND) {
             double msg = value().pr / value().edges.size();
             for (vector<VertexID>::iterator it = value().edges.begin(); it != value().edges.end(); it++) {
                 send_message(*it, msg);
@@ -49,34 +75,40 @@ public:
 
 //====================================
 
-class PRAgg_pregel : public Aggregator<PRVertex_pregel, double, double> {
-private:
-    double sum;
 
+class PRAgg_pregel : public Aggregator<PRVertex_pregel, PRAggType, PRAggType> {
+private:
+    PRAggType value;
 public:
     virtual void init()
     {
-        sum = 0;
+        value.sum = 0;
+        value.converge = 0;
     }
 
     virtual void stepPartial(PRVertex_pregel* v)
     {
         if (v->value().edges.size() == 0)
-            sum += v->value().pr;
+            value.sum += v->value().pr;
+        value.converge += v->value().delta > 0.01;
     }
 
-    virtual void stepFinal(double* part)
+    virtual void stepFinal(PRAggType* part)
     {
-        sum += *part;
+        value.sum += part->sum;
+        value.converge += part->converge;
     }
 
-    virtual double* finishPartial()
+    virtual PRAggType* finishPartial()
     {
-        return &sum;
+        return &value;
     }
-    virtual double* finishFinal()
+    virtual PRAggType* finishFinal()
     {
-        return &sum;
+        if(step_num() > 1 && value.converge == 0)
+            forceTerminate();
+        cout << "sum: " << value.sum  << " converge: " << value.converge << endl;
+        return &value;
     }
 };
 

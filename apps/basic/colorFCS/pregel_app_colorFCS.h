@@ -2,7 +2,7 @@
 #include <cassert>
 using namespace std;
 
-const int EdgeThreshold = 5000000;
+const int EdgeThreshold = 500000;
 
 struct ColorValue_pregel {
     int color; // -1 not assigned, -2 tentative, selected, -3 in MIS

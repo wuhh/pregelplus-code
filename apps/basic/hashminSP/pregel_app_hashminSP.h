@@ -139,7 +139,7 @@ public:
         // hard code for btc;
         //VertexToPick = 75525479;
         // hard code for friendster
-        VertexToPick = 15588959;
+        VertexToPick = 0;
 
         if (phase_num() == 1 && step_num() == 1) {
             cout << VertexToPick << " is picked up as a pivot" << endl;

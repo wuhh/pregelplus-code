@@ -384,8 +384,8 @@ public:
             pch = strtok(NULL, " ");
             int vid = atoi(pch);
             pch = strtok(NULL, " ");
-            int dis = atoi(pch);
-            v->value().edges.push_back(inttriplet(v->id,vid,dis));
+            double dis = atof(pch);
+            v->value().edges.push_back(inttriplet(v->id,vid,(int)dis));
         }
         v->value().type = SuperVertex;
         v->value().root = v->id ;

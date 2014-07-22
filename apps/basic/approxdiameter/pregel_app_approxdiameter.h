@@ -1,7 +1,7 @@
 #include "basic/pregel-dev.h"
 #include <cmath>
 using namespace std;
-int DIAMETER = 13;
+int DIAMETER = 10;
 //helper function
 double myrand()
 {
