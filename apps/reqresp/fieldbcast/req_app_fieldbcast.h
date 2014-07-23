@@ -54,8 +54,9 @@ public:
         pch = strtok(line, "\t");
         FieldVertex_req* v = new FieldVertex_req;
         v->id = atoi(pch);
-        pch = strtok(NULL, " ");
-        v->value().worker = atoi(pch);
+        //pch = strtok(NULL, " ");
+        //v->value().worker = atoi(pch);
+        v->value().worker = v->id;
         pch = strtok(NULL, " ");
         int num = atoi(pch);
         vector<intpair>& edges = v->value().edges;

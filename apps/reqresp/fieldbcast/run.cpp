@@ -3,7 +3,7 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    req_fieldbcast("/ldg/livej", "/req/livej");
+    req_fieldbcast("/pullgel/livej", "/exp/livej");
     worker_finalize();
     return 0;
 }

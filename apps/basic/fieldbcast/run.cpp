@@ -4,7 +4,7 @@ int main(int argc, char* argv[])
 {
     init_workers();
     bool directed = true;
-    pregel_fieldbcast("/ldg/webbase", "/req/webbase", directed);
+    pregel_fieldbcast("/pullgel/twitter", "/exp/webbase", directed);
     worker_finalize();
     return 0;
 }
