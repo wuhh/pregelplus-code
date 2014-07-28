@@ -37,7 +37,7 @@ public:
             double residual = *agg / get_vnum();
             value().pr = 0.15 / get_vnum() + 0.85 * (sum + residual);
         }
-        if (step_num() < ROUND) {
+        if (step_num() < 11) {
             double msg = value().pr / value().deg;
             broadcast(msg);
         } else

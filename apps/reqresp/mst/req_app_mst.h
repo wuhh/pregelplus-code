@@ -2,6 +2,8 @@
 #include "utils/type.h"
 using namespace std;
 
+//Note that we assume integer edge weight, you may want to change it to double in your app
+
 enum MSTPhase
 {
     DistributedMinEdgePicking_LocalPickingAndSendToRoot,
@@ -304,6 +306,7 @@ public:
                 }
             }
             edges.swap(updatedEdges);
+            if(edges.size()==0) vote_to_halt();//!!! important in order for agg.ifPointsAtSupervertex to work
             break;
         }
     }
@@ -405,10 +408,13 @@ public:
         {
             pch = strtok(NULL, " ");
             int vid = atoi(pch);
-            pch = strtok(NULL, " ");
-            int dis = (int)atof(pch);
-            //int dis = 1;
-            v->value().edges.push_back(inttriplet(v->id, vid, dis));
+            //pch = strtok(NULL, " ");
+            if(vid != v->id)//self-loop removal //$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            {
+                //int dis = (int)atof(pch);
+                int dis = 1;
+                v->value().edges.push_back(inttriplet(v->id, vid, dis));
+            }
         }
         v->value().type = SuperVertex;
         v->value().root = v->id;
@@ -420,7 +426,7 @@ public:
         std::vector<inttriplet>& output = v->value().output;
         for(int i = 0 ;i < output.size(); i ++)
         {
-            sprintf(buf, "%d %d %d\n", output[i].v1, output[i].v2,  output[i].v3 );
+            sprintf(buf, " %d %d %d\n", output[i].v1, output[i].v2,  output[i].v3 );
             writer.write(buf);
         }
     }

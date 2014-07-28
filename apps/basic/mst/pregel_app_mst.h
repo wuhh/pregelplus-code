@@ -408,9 +408,9 @@ class MSTWorker : public Worker<MSTVertex,MSTAgg>
         {
             pch = strtok(NULL, " ");
             int vid = atoi(pch);
-            //pch = strtok(NULL, " ");
-            //int dis = (int)atof(pch);
-            int dis = 1;
+            pch = strtok(NULL, " ");
+            int dis = (int)atof(pch);
+            //int dis = 1;
             v->value().edges.push_back(inttriplet(v->id, vid, dis));
         }
         v->value().type = SuperVertex;

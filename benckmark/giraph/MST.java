@@ -291,6 +291,11 @@ public class MST
 			{
 				aggregate(haltAlgorithmAGG, new BooleanWritable(false));
 			}
+			else
+			{
+				this.voteToHalt();
+			}
+			
 			
 			break;
 		}
