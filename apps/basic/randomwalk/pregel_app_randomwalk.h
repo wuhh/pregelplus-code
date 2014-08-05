@@ -115,8 +115,10 @@ public:
             }
         } else {
             for (int i = 0; i < messages.size(); i++) {
-                int vid = negate(messages[i]);
-                insert(vid);
+                if (messages[i] < 0) {
+                    int vid = negate(messages[i]);
+                    insert(vid);
+                }
             }
         }
     }
