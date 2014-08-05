@@ -1,11 +1,11 @@
 #include "basic/pregel-dev.h"
 #include <cmath>
+#include <ctime>
 #include <cstdlib>
 using namespace std;
 const int TOPK = 10;
-const int R = 10;
-const int L = 500;
-const int TotalRound = (int)(0.15 * L);
+const int L = 100;
+const int R = (int)(0.15 * L);
 
 struct RandomWalkValue {
     hash_map<VertexID, int> counts;
@@ -146,7 +146,7 @@ public:
     virtual RandomWalkAggType* finishFinal()
     {
         if (step_num() == 1) {
-            value.lambda = geom(0.15);
+            value.lambda = geom(1 - 0.15);
             value.lambdaTotalLength = value.lambda;
             value.round = 0;
             value.length = 0;
@@ -154,10 +154,10 @@ public:
             RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
 
             if (agg->length == agg->lambda) {
-                if (agg->round == TotalRound - 1) {
+                if (agg->round == R - 1) {
                     forceTerminate();
                 } else {
-                    value.lambda = geom(0.15);
+                    value.lambda = geom(1 - 0.15);
                     value.lambdaTotalLength += value.lambda;
                     value.round = agg->round + 1;
                     value.length = 0;
@@ -169,6 +169,13 @@ public:
                 value.length = agg->length + 1;
             }
         }
+        if (_my_rank == 0) {
+            cout << "Cur Lambda: " << value.lambda
+                 << " Length: " << value.length
+                 << " Total Lambda: " << value.lambdaTotalLength
+                 << " Cur Round: " << value.round
+                 << " Total Round: " << R << endl;
+        }
         return &value;
     }
 };
@@ -179,6 +186,7 @@ class RandomWalkWorker : public Worker<RandomWalkVertex, RandomWalkAgg> {
 public:
     virtual RandomWalkVertex* toVertex(char* line)
     {
+        /*
         char* pch;
         pch = strtok(line, "\t");
         RandomWalkVertex* v = new RandomWalkVertex;
@@ -186,6 +194,19 @@ public:
         while (pch = strtok(NULL, "\t")) {
             v->value().edges.push_back(atoi(pch));
         }
+        */
+
+        char* pch;
+        pch = strtok(line, "\t");
+        RandomWalkVertex* v = new RandomWalkVertex;
+        v->id = atoi(pch);
+        pch = strtok(NULL, " ");
+        int num = atoi(pch);
+        while (num--) {
+            pch = strtok(NULL, " ");
+            v->value().edges.push_back(atoi(pch));
+        }
+
         return v;
     }
 
@@ -195,7 +216,7 @@ public:
         hash_map<VertexID, int>& counts = v->value().counts;
         vector<pair<int, int> > topkResults;
         for (hash_map<VertexID, int>::iterator it = counts.begin(); it != counts.end(); it++) {
-            topkResults.push_back(*it);
+            topkResults.push_back(make_pair(it->second, it->first));
         }
         sort(topkResults.begin(), topkResults.end());
         reverse(topkResults.begin(), topkResults.end());
@@ -209,7 +230,9 @@ public:
 
             int vid = topkResults[i].second;
             double pagerank = 1.0 * topkResults[i].first / sum;
-            sprintf(buf, " %d %f", vid, pagerank);
+            int visit = topkResults[i].first;
+            //sprintf(buf, " %d %f", vid, pagerank);
+            sprintf(buf, " %d %d", vid, visit);
             writer.write(buf);
         }
         writer.write("\n");
@@ -224,6 +247,7 @@ void pregel_randomwalk(string in_path, string out_path)
     param.native_dispatcher = false;
     RandomWalkWorker worker;
     RandomWalkAgg agg;
+    srand(time(0));
     worker.setAggregator(&agg);
     worker.run(param);
 }
