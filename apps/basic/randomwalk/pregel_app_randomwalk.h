@@ -1,102 +1,158 @@
 #include "basic/pregel-dev.h"
 #include <cmath>
 using namespace std;
+const int TOPK = 10;
+const int R = 10;
+const int L = 500;
+const int TotalRound = (int)(0.15 * L);
 
-struct PRValue_pregel {
-    double pr;
-    double delta;
+struct RandomWalkValue {
+	hash_map<VertexID,int> counts;
     vector<VertexID> edges;
 };
 
-ibinstream& operator<<(ibinstream& m, const PRValue_pregel& v)
+ibinstream& operator<<(ibinstream& m, const RandomWalkValue& v)
 {
-    m << v.pr;
-    m << v.delta;
+    m << v.counts;
     m << v.edges;
     return m;
 }
 
-obinstream& operator>>(obinstream& m, PRValue_pregel& v)
+obinstream& operator>>(obinstream& m, RandomWalkValue& v)
 {
-    m >> v.pr;
-    m >> v.delta;
+    m >> v.counts;
     m >> v.edges;
     return m;
 }
 
+double myrand()
+{
+	return 1.0 * rand() %  RAND_MAX;
+}
+
+int geom(double e)
+{
+	int len = 1;
+	while(myrand() < e)
+	{
+		len ++;
+	}
+	return len;
+}
+
 //====================================
 
-struct PRAggType
+struct RandomWalkAggType
 {
-    double sum;
-    int converge;
+    int lambdaTotalLength; // lambda0 + lambda1 + ... +  lambda(N-1)
+	int round; // from 0 to N-1
+	int lambda;
+	int length;
 };
 
-ibinstream& operator<<(ibinstream& m, const PRAggType& v)
+ibinstream& operator<<(ibinstream& m, const RandomWalkAggType& v)
 {
-    m << v.sum;
-    m << v.converge;
+    m << v.lambdaTotalLength;
+    m << v.round;
+	m << v.lambda;
+	m << v.length;
     return m;
 }
 
-obinstream& operator>>(obinstream& m, PRAggType& v)
+obinstream& operator>>(obinstream& m, RandomWalkAggType& v)
 {
-    m >> v.sum;
-    m >> v.converge;
+    m >> v.lambdaTotalLength;
+    m >> v.round;
+	m >> v.lambda;
+	m >> v.length;
     return m;
 }
 
+// two types of messages. Positive means a source vertex are visiting this vertex. Negative (-vid - 1)means counter + 1
 
-class PRVertex_pregel : public Vertex<VertexID, PRValue_pregel, double> {
+
+class RandomWalkVertex : public Vertex<VertexID, RandomWalkValue, int> {
 public:
+	
+	int negate(int v)
+	{
+		return - v - 1;
+	}
+	
+	VertexID uniformSampleFromNeighbors()
+	{
+		return edges[ rand() % edges.size()];
+	}
+
+	void insert(int vid)
+	{
+		value().counts[vid] += 1;
+	}
+	
     virtual void compute(MessageContainer& messages)
     {
-        if (step_num() == 1) {
-            value().pr = 1.0;
-        } else {
-            double sum = 0;
-            for (MessageIter it = messages.begin(); it != messages.end(); it++) {
-                sum += *it;
-            }
-            PRAggType* agg = (PRAggType*)getAgg();
-            double residual = agg->sum / get_vnum();
-            value().delta = fabs(value().pr - (0.15 + 0.85 * (sum + residual)));
-            value().pr = 0.15 + 0.85 * (sum + residual);
-        }
-        if (true || step_num() < ROUND) {
-            double msg = value().pr / value().edges.size();
-            for (vector<VertexID>::iterator it = value().edges.begin(); it != value().edges.end(); it++) {
-                send_message(*it, msg);
-            }
-        } else
-            vote_to_halt();
+		if (step_num() == 1)
+		{
+			return; // for Agg init
+		}
+	
+		RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
+		
+		if(agg->length == 0)
+		{
+			if(value().edges.size() > 0)
+			{
+				int nextVertexToGo = uniformSampleFromNeighbors();
+				send_message(nextVertexToGo, id);
+				insert(nextVertexToGo);
+			}
+		}
+		else if(agg->length < agg->lambda)
+		{
+			for(int i = 0 ;i < messages.size(); i ++)
+			{
+				if(messages[i] < 0)
+				{
+					int vid = negate(messages[i]);
+					insert(vid);
+				}
+				else
+				{
+					if(value().edges.size() > 0)
+					{
+						int nextVertexToGo = uniformSampleFromNeighbors();
+						send_message(nextVertexToGo, messages[i]);
+					}
+					send_message(messages[i], negate(nextVertexToGo));
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0 ;i < messages.size(); i ++)
+			{
+				int vid = negate(messages[i]);
+				insert(vid);
+			}
+		}
     }
 };
 
-//====================================
-
-
-class PRAgg_pregel : public Aggregator<PRVertex_pregel, PRAggType, PRAggType> {
+class RandomWalkAgg : public Aggregator<RandomWalkVertex, RandomWalkAggType, RandomWalkAggType> {
 private:
-    PRAggType value;
+    RandomWalkAggType value;
 public:
     virtual void init()
     {
-        value.sum = 0;
-        value.converge = 0;
     }
 
-    virtual void stepPartial(PRVertex_pregel* v)
+    virtual void stepPartial(RandomWalkVertex* v)
     {
-        if (v->value().edges.size() == 0)
-            value.sum += v->value().pr;
-        value.converge += v->value().delta > 0.01;
     }
 
-    virtual void stepFinal(PRAggType* part)
+    virtual void stepFinal(RandomWalkAggType* part)
     {
-        value.sum += part->sum;
-        value.converge += part->converge;
+
     }
 
     virtual PRAggType* finishPartial()
@@ -105,47 +161,88 @@ public:
     }
     virtual PRAggType* finishFinal()
     {
-        if(step_num() > 1 && value.converge == 0)
-            forceTerminate();
-        cout << "sum: " << value.sum  << " converge: " << value.converge << endl;
+		if(step_num() == 1)
+		{
+			value.lambda = geom(0.15);
+			value.lambdaTotalLength = value.lambda;
+			value.round = 0;
+			value.length = 0;
+		}
+		else
+		{
+			RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
+			
+			if(agg->length == agg->lambda)
+			{
+				if(agg->round == TotalRound - 1)
+				{
+					forceTerminate();
+				}
+				else
+				{
+					value.lambda = geom(0.15);
+					value.lambdaTotalLength += value.lambda;
+					value.round = agg->round + 1;
+					value.length = 0;
+				}
+			}
+			else
+			{
+				value.lambda = agg->lambda;
+				value.lambdaTotalLength = agg->lambdaTotalLength;
+				value.round = agg->round;
+				value.length = agg->length + 1;
+			}
+		}
         return &value;
     }
 };
 
-class PRWorker_pregel : public Worker<PRVertex_pregel, PRAgg_pregel> {
+
+class RandomWalkWorker : public Worker<RandomWalkVertex,RandomWalkAgg> {
     char buf[100];
 
 public:
-    virtual PRVertex_pregel* toVertex(char* line)
+    virtual RandomWalkVertex* toVertex(char* line)
     {
         char* pch;
         pch = strtok(line, "\t");
-        PRVertex_pregel* v = new PRVertex_pregel;
+        RandomWalkVertex* v = new RandomWalkVertex;
         v->id = atoi(pch);
-        pch = strtok(NULL, " ");
-        int num = atoi(pch);
-        for (int i = 0; i < num; i++) {
-            pch = strtok(NULL, " ");
-            v->value().edges.push_back(atoi(pch));
-        }
+		while(pch = strtok(NULL, "\t"))
+		{
+			v->value().edges.push_back(atoi(pch));
+		}
         return v;
     }
 
-    virtual void toline(PRVertex_pregel* v, BufferedWriter& writer)
+    virtual void toline(RandomWalkVertex* v, BufferedWriter& writer)
     {
-        sprintf(buf, "%d\t%f\n", v->id, v->value().pr);
+        int sum = ((RandomWalkAggType*)getAgg())->lambdaTotalLength;
+		const hash_map<VertexID,int>& counts = v->value().counts;
+		vector< pair<int,int> > topkResults;
+		for(hash_map<VertexID,int>::iterator it = counts.begin(); it != counts.end(); it++ )
+		{
+			topkResults.push_back(*it);
+		}
+		sort(topkResults.begin(),topkResults.end());
+		reverse(topkResults.begin(),topkResults.end());
+		
+		sprintf(buf, "%d", v->id);
         writer.write(buf);
+		
+		for(int i = 0 ;i < topkResults.size(); i ++)
+		{
+			if(i == TOPK) break;
+			
+			int vid = topkResults[i].second;
+			double pagerank = 1.0 *  topkResults[i].first / sum;
+			sprintf(buf, " %d %f", vid, pagerank);
+			writer.write(buf);
+		}
+		writer.write("\n");
     }
 };
-
-class PRCombiner_pregel : public Combiner<double> {
-public:
-    virtual void combine(double& old, const double& new_msg)
-    {
-        old += new_msg;
-    }
-};
-
 void pregel_randomwalk(string in_path, string out_path)
 {
     WorkerParams param;
@@ -153,9 +250,8 @@ void pregel_randomwalk(string in_path, string out_path)
     param.output_path = out_path;
     param.force_write = true;
     param.native_dispatcher = false;
-    PRWorker_pregel worker;
-    PRAgg_pregel agg;
+    RandomWalkWorker worker;
+    RandomWalkAgg agg;
     worker.setAggregator(&agg);
     worker.run(param);
 }
-
