@@ -188,13 +188,12 @@ public:
 
             hash_map<int, vector<int> > right;
             hash_map<int, vector<int> > left;
-            
+
             int sum = 0;
             for (int i = 0; i < graph.size(); i++) {
                 BipartiteMatchingVertex& vertex = graph[i];
                 sum += vertex.value().edges.size();
             }
- 
 
             int lastmatch = -1, match = 0;
             for (int superstep = 1;; superstep++) {

@@ -46,7 +46,6 @@ obinstream& operator>>(obinstream& m, SPValue_pregel& v)
 
 //====================================
 
-
 //====================================
 
 class SPVertex_pregel : public Vertex<VertexID, SPValue_pregel, double> {
@@ -83,7 +82,6 @@ public:
         }
         vote_to_halt();
     }
-
 };
 
 class SPWorker_pregel : public Worker<SPVertex_pregel> {
@@ -110,8 +108,8 @@ public:
         for (int i = 0; i < num; i++) {
             pch = strtok(NULL, " ");
             int nb = atoi(pch);
-           // pch = strtok(NULL, " ");
-           // double len = atof(pch);
+            // pch = strtok(NULL, " ");
+            // double len = atof(pch);
             double len = 1;
             SPEdge_pregel edge = { len, nb };
             v->value().edges.push_back(edge);

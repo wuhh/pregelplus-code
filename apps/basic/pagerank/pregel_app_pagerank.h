@@ -26,8 +26,7 @@ obinstream& operator>>(obinstream& m, PRValue_pregel& v)
 
 //====================================
 
-struct PRAggType
-{
+struct PRAggType {
     double sum;
     int converge;
 };
@@ -45,7 +44,6 @@ obinstream& operator>>(obinstream& m, PRAggType& v)
     m >> v.converge;
     return m;
 }
-
 
 class PRVertex_pregel : public Vertex<VertexID, PRValue_pregel, double> {
 public:
@@ -75,10 +73,10 @@ public:
 
 //====================================
 
-
 class PRAgg_pregel : public Aggregator<PRVertex_pregel, PRAggType, PRAggType> {
 private:
     PRAggType value;
+
 public:
     virtual void init()
     {
@@ -105,9 +103,9 @@ public:
     }
     virtual PRAggType* finishFinal()
     {
-        if(step_num() > 1 && value.converge == 0)
+        if (step_num() > 1 && value.converge == 0)
             forceTerminate();
-        cout << "sum: " << value.sum  << " converge: " << value.converge << endl;
+        cout << "sum: " << value.sum << " converge: " << value.converge << endl;
         return &value;
     }
 };
@@ -161,4 +159,3 @@ void pregel_pagerank(string in_path, string out_path, bool use_combiner)
     worker.setAggregator(&agg);
     worker.run(param);
 }
-

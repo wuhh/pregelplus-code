@@ -1,5 +1,6 @@
 #include "basic/pregel-dev.h"
 #include <cmath>
+#include <cstdlib>
 using namespace std;
 const int TOPK = 10;
 const int R = 10;
@@ -7,7 +8,7 @@ const int L = 500;
 const int TotalRound = (int)(0.15 * L);
 
 struct RandomWalkValue {
-	hash_map<VertexID,int> counts;
+    hash_map<VertexID, int> counts;
     vector<VertexID> edges;
 };
 
@@ -27,35 +28,33 @@ obinstream& operator>>(obinstream& m, RandomWalkValue& v)
 
 double myrand()
 {
-	return 1.0 * rand() %  RAND_MAX;
+    return 1.0 * rand() / RAND_MAX;
 }
 
 int geom(double e)
 {
-	int len = 1;
-	while(myrand() < e)
-	{
-		len ++;
-	}
-	return len;
+    int len = 1;
+    while (myrand() < e) {
+        len++;
+    }
+    return len;
 }
 
 //====================================
 
-struct RandomWalkAggType
-{
+struct RandomWalkAggType {
     int lambdaTotalLength; // lambda0 + lambda1 + ... +  lambda(N-1)
-	int round; // from 0 to N-1
-	int lambda;
-	int length;
+    int round; // from 0 to N-1
+    int lambda;
+    int length;
 };
 
 ibinstream& operator<<(ibinstream& m, const RandomWalkAggType& v)
 {
     m << v.lambdaTotalLength;
     m << v.round;
-	m << v.lambda;
-	m << v.length;
+    m << v.lambda;
+    m << v.length;
     return m;
 }
 
@@ -63,84 +62,70 @@ obinstream& operator>>(obinstream& m, RandomWalkAggType& v)
 {
     m >> v.lambdaTotalLength;
     m >> v.round;
-	m >> v.lambda;
-	m >> v.length;
+    m >> v.lambda;
+    m >> v.length;
     return m;
 }
 
 // two types of messages. Positive means a source vertex are visiting this vertex. Negative (-vid - 1)means counter + 1
 
-
 class RandomWalkVertex : public Vertex<VertexID, RandomWalkValue, int> {
 public:
-	
-	int negate(int v)
-	{
-		return - v - 1;
-	}
-	
-	VertexID uniformSampleFromNeighbors()
-	{
-		return edges[ rand() % edges.size()];
-	}
+    int negate(int v)
+    {
+        return -v - 1;
+    }
 
-	void insert(int vid)
-	{
-		value().counts[vid] += 1;
-	}
-	
+    VertexID uniformSampleFromNeighbors()
+    {
+        return value().edges[rand() % value().edges.size()];
+    }
+
+    void insert(int vid)
+    {
+        value().counts[vid] += 1;
+    }
+
     virtual void compute(MessageContainer& messages)
     {
-		if (step_num() == 1)
-		{
-			return; // for Agg init
-		}
-	
-		RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
-		
-		if(agg->length == 0)
-		{
-			if(value().edges.size() > 0)
-			{
-				int nextVertexToGo = uniformSampleFromNeighbors();
-				send_message(nextVertexToGo, id);
-				insert(nextVertexToGo);
-			}
-		}
-		else if(agg->length < agg->lambda)
-		{
-			for(int i = 0 ;i < messages.size(); i ++)
-			{
-				if(messages[i] < 0)
-				{
-					int vid = negate(messages[i]);
-					insert(vid);
-				}
-				else
-				{
-					if(value().edges.size() > 0)
-					{
-						int nextVertexToGo = uniformSampleFromNeighbors();
-						send_message(nextVertexToGo, messages[i]);
-					}
-					send_message(messages[i], negate(nextVertexToGo));
-				}
-			}
-		}
-		else
-		{
-			for(int i = 0 ;i < messages.size(); i ++)
-			{
-				int vid = negate(messages[i]);
-				insert(vid);
-			}
-		}
+        if (step_num() == 1) {
+            return; // for Agg init
+        }
+
+        RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
+
+        if (agg->length == 0) {
+            if (value().edges.size() > 0) {
+                int nextVertexToGo = uniformSampleFromNeighbors();
+                send_message(nextVertexToGo, id);
+                insert(nextVertexToGo);
+            }
+        } else if (agg->length < agg->lambda) {
+            for (int i = 0; i < messages.size(); i++) {
+                if (messages[i] < 0) {
+                    int vid = negate(messages[i]);
+                    insert(vid);
+                } else {
+                    if (value().edges.size() > 0) {
+                        int nextVertexToGo = uniformSampleFromNeighbors();
+                        send_message(nextVertexToGo, messages[i]);
+                        send_message(messages[i], negate(nextVertexToGo));
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < messages.size(); i++) {
+                int vid = negate(messages[i]);
+                insert(vid);
+            }
+        }
     }
 };
 
 class RandomWalkAgg : public Aggregator<RandomWalkVertex, RandomWalkAggType, RandomWalkAggType> {
 private:
     RandomWalkAggType value;
+
 public:
     virtual void init()
     {
@@ -152,54 +137,43 @@ public:
 
     virtual void stepFinal(RandomWalkAggType* part)
     {
-
     }
 
-    virtual PRAggType* finishPartial()
+    virtual RandomWalkAggType* finishPartial()
     {
         return &value;
     }
-    virtual PRAggType* finishFinal()
+    virtual RandomWalkAggType* finishFinal()
     {
-		if(step_num() == 1)
-		{
-			value.lambda = geom(0.15);
-			value.lambdaTotalLength = value.lambda;
-			value.round = 0;
-			value.length = 0;
-		}
-		else
-		{
-			RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
-			
-			if(agg->length == agg->lambda)
-			{
-				if(agg->round == TotalRound - 1)
-				{
-					forceTerminate();
-				}
-				else
-				{
-					value.lambda = geom(0.15);
-					value.lambdaTotalLength += value.lambda;
-					value.round = agg->round + 1;
-					value.length = 0;
-				}
-			}
-			else
-			{
-				value.lambda = agg->lambda;
-				value.lambdaTotalLength = agg->lambdaTotalLength;
-				value.round = agg->round;
-				value.length = agg->length + 1;
-			}
-		}
+        if (step_num() == 1) {
+            value.lambda = geom(0.15);
+            value.lambdaTotalLength = value.lambda;
+            value.round = 0;
+            value.length = 0;
+        } else {
+            RandomWalkAggType* agg = (RandomWalkAggType*)getAgg();
+
+            if (agg->length == agg->lambda) {
+                if (agg->round == TotalRound - 1) {
+                    forceTerminate();
+                } else {
+                    value.lambda = geom(0.15);
+                    value.lambdaTotalLength += value.lambda;
+                    value.round = agg->round + 1;
+                    value.length = 0;
+                }
+            } else {
+                value.lambda = agg->lambda;
+                value.lambdaTotalLength = agg->lambdaTotalLength;
+                value.round = agg->round;
+                value.length = agg->length + 1;
+            }
+        }
         return &value;
     }
 };
 
-
-class RandomWalkWorker : public Worker<RandomWalkVertex,RandomWalkAgg> {
+class RandomWalkWorker : public Worker<RandomWalkVertex, RandomWalkAgg> {
     char buf[100];
 
 public:
@@ -209,38 +183,36 @@ public:
         pch = strtok(line, "\t");
         RandomWalkVertex* v = new RandomWalkVertex;
         v->id = atoi(pch);
-		while(pch = strtok(NULL, "\t"))
-		{
-			v->value().edges.push_back(atoi(pch));
-		}
+        while (pch = strtok(NULL, "\t")) {
+            v->value().edges.push_back(atoi(pch));
+        }
         return v;
     }
 
     virtual void toline(RandomWalkVertex* v, BufferedWriter& writer)
     {
         int sum = ((RandomWalkAggType*)getAgg())->lambdaTotalLength;
-		const hash_map<VertexID,int>& counts = v->value().counts;
-		vector< pair<int,int> > topkResults;
-		for(hash_map<VertexID,int>::iterator it = counts.begin(); it != counts.end(); it++ )
-		{
-			topkResults.push_back(*it);
-		}
-		sort(topkResults.begin(),topkResults.end());
-		reverse(topkResults.begin(),topkResults.end());
-		
-		sprintf(buf, "%d", v->id);
+        hash_map<VertexID, int>& counts = v->value().counts;
+        vector<pair<int, int> > topkResults;
+        for (hash_map<VertexID, int>::iterator it = counts.begin(); it != counts.end(); it++) {
+            topkResults.push_back(*it);
+        }
+        sort(topkResults.begin(), topkResults.end());
+        reverse(topkResults.begin(), topkResults.end());
+
+        sprintf(buf, "%d", v->id);
         writer.write(buf);
-		
-		for(int i = 0 ;i < topkResults.size(); i ++)
-		{
-			if(i == TOPK) break;
-			
-			int vid = topkResults[i].second;
-			double pagerank = 1.0 *  topkResults[i].first / sum;
-			sprintf(buf, " %d %f", vid, pagerank);
-			writer.write(buf);
-		}
-		writer.write("\n");
+
+        for (int i = 0; i < topkResults.size(); i++) {
+            if (i == TOPK)
+                break;
+
+            int vid = topkResults[i].second;
+            double pagerank = 1.0 * topkResults[i].first / sum;
+            sprintf(buf, " %d %f", vid, pagerank);
+            writer.write(buf);
+        }
+        writer.write("\n");
     }
 };
 void pregel_randomwalk(string in_path, string out_path)
