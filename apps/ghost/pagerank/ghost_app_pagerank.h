@@ -5,8 +5,7 @@
 #include <cstdlib>
 using namespace std;
 
-struct PRValue_ghost
-{
+struct PRValue_ghost {
     double pr;
     double delta;
     int deg;
@@ -28,11 +27,9 @@ obinstream& operator>>(obinstream& m, PRValue_ghost& v)
     return m;
 }
 
-
 //====================================
 
-struct PRAggType
-{
+struct PRAggType {
     double sum;
     int converge;
 };
@@ -53,24 +50,19 @@ obinstream& operator>>(obinstream& m, PRAggType& v)
 
 //====================================
 
-class PRVertex_ghost : public GVertex<VertexID, PRValue_ghost, double>
-{
+class PRVertex_ghost : public GVertex<VertexID, PRValue_ghost, double> {
 public:
     virtual void compute(MessageContainer& messages)
     {
-        if (step_num() == 1)
-        {
+        if (step_num() == 1) {
             value().pr = 1.0;
             value().delta = 1.0; //larger than 0.05 is ok
-        }
-        else
-        {
+        } else {
             double pr = 0.15 + 0.85 * accumulate(messages.begin(), messages.end(), 0.0);
             value().delta = fabs(value().pr - pr);
             value().pr = pr;
         }
-        if(value().deg > 0)
-        {
+        if (value().deg > 0) {
             double msg = value().pr / value().deg;
             broadcast(msg);
         }
@@ -79,11 +71,10 @@ public:
 
 //====================================
 
-
-class PRAgg_ghost : public Aggregator<PRVertex_ghost, int, int >
-{
+class PRAgg_ghost : public Aggregator<PRVertex_ghost, int, int> {
 private:
     int sum;
+
 public:
     virtual void init()
     {
@@ -107,26 +98,22 @@ public:
     virtual int* finishFinal()
     {
         cout << "Not Converged #: " << sum << endl;
-        if(sum == 0)
-        {
+        if (sum == 0) {
             forceTerminate();
         }
         return &sum;
     }
 };
 
-
-
-
-class PRWorker_ghost : public GWorker<PRVertex_ghost, PRAgg_ghost>
-{
+class PRWorker_ghost : public GWorker<PRVertex_ghost, PRAgg_ghost> {
     char buf[100];
 
 public:
     virtual PRVertex_ghost* toVertex(char* line)
     {
         int length = strlen(line);
-        if(length == 0) return 0;
+        if (length == 0)
+            return 0;
 
         char* pch;
         pch = strtok(line, "\t");
@@ -134,8 +121,7 @@ public:
         v->id = atoi(pch);
         v->value().deg = 0;
         EdgeContainer& edges = v->neighbors();
-        while(pch = strtok(NULL, "\t"))
-        {
+        while (pch = strtok(NULL, "\t")) {
             EdgeT edge;
             edge.id = atoi(pch);
             edges.push_back(edge);
@@ -151,8 +137,7 @@ public:
     }
 };
 
-class PRCombiner_ghost : public Combiner<double>
-{
+class PRCombiner_ghost : public Combiner<double> {
 public:
     virtual void combine(double& old, const double& new_msg)
     {
