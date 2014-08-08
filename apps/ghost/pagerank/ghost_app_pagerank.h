@@ -1,14 +1,21 @@
 #include "ghost/ghost-dev.h"
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <cstdlib>
 using namespace std;
 
-struct PRValue_ghost {
+struct PRValue_ghost
+{
     double pr;
+    double delta;
     int deg;
 };
 
 ibinstream& operator<<(ibinstream& m, const PRValue_ghost& v)
 {
     m << v.pr;
+    m << v.delta;
     m << v.deg;
     return m;
 }
@@ -16,41 +23,67 @@ ibinstream& operator<<(ibinstream& m, const PRValue_ghost& v)
 obinstream& operator>>(obinstream& m, PRValue_ghost& v)
 {
     m >> v.pr;
+    m >> v.delta;
     m >> v.deg;
+    return m;
+}
+
+
+//====================================
+
+struct PRAggType
+{
+    double sum;
+    int converge;
+};
+
+ibinstream& operator<<(ibinstream& m, const PRAggType& v)
+{
+    m << v.sum;
+    m << v.converge;
+    return m;
+}
+
+obinstream& operator>>(obinstream& m, PRAggType& v)
+{
+    m >> v.sum;
+    m >> v.converge;
     return m;
 }
 
 //====================================
 
-class PRVertex_ghost : public GVertex<VertexID, PRValue_ghost, double> {
+class PRVertex_ghost : public GVertex<VertexID, PRValue_ghost, double>
+{
 public:
     virtual void compute(MessageContainer& messages)
     {
-        if (step_num() == 1) {
-            value().pr = 1.0 / get_vnum();
-        } else {
-            double sum = 0;
-            for (MessageIter it = messages.begin(); it != messages.end(); it++) {
-                sum += *it;
-            }
-            double* agg = (double*)getAgg();
-            double residual = *agg / get_vnum();
-            value().pr = 0.15 / get_vnum() + 0.85 * (sum + residual);
+        if (step_num() == 1)
+        {
+            value().pr = 1.0;
+            value().delta = 1.0; //larger than 0.05 is ok
         }
-        if (step_num() < 11) {
+        else
+        {
+            double pr = 0.15 + 0.85 * accumulate(messages.begin(), messages.end(), 0.0);
+            value().delta = fabs(value().pr - pr);
+            value().pr = pr;
+        }
+        if(value().deg > 0)
+        {
             double msg = value().pr / value().deg;
             broadcast(msg);
-        } else
-            vote_to_halt();
+        }
     }
 };
 
 //====================================
 
-class PRAgg_ghost : public Aggregator<PRVertex_ghost, double, double> {
-private:
-    double sum;
 
+class PRAgg_ghost : public Aggregator<PRVertex_ghost, int, int >
+{
+private:
+    int sum;
 public:
     virtual void init()
     {
@@ -59,44 +92,54 @@ public:
 
     virtual void stepPartial(PRVertex_ghost* v)
     {
-        if (v->value().deg == 0)
-            sum += v->value().pr;
+        sum += v->value().delta > 0.05;
     }
 
-    virtual void stepFinal(double* part)
+    virtual void stepFinal(int* part)
     {
         sum += *part;
     }
 
-    virtual double* finishPartial()
+    virtual int* finishPartial()
     {
         return &sum;
     }
-    virtual double* finishFinal()
+    virtual int* finishFinal()
     {
+        cout << "Not Converged #: " << sum << endl;
+        if(sum == 0)
+        {
+            forceTerminate();
+        }
         return &sum;
     }
 };
 
-class PRWorker_ghost : public GWorker<PRVertex_ghost, PRAgg_ghost> {
+
+
+
+class PRWorker_ghost : public GWorker<PRVertex_ghost, PRAgg_ghost>
+{
     char buf[100];
 
 public:
     virtual PRVertex_ghost* toVertex(char* line)
     {
+        int length = strlen(line);
+        if(length == 0) return 0;
+
         char* pch;
         pch = strtok(line, "\t");
         PRVertex_ghost* v = new PRVertex_ghost;
         v->id = atoi(pch);
-        pch = strtok(NULL, " ");
-        int num = atoi(pch);
-        v->value().deg = atoi(pch);
+        v->value().deg = 0;
         EdgeContainer& edges = v->neighbors();
-        for (int i = 0; i < num; i++) {
-            pch = strtok(NULL, " ");
+        while(pch = strtok(NULL, "\t"))
+        {
             EdgeT edge;
             edge.id = atoi(pch);
             edges.push_back(edge);
+            v->value().deg++;
         }
         return v;
     }
@@ -108,7 +151,8 @@ public:
     }
 };
 
-class PRCombiner_ghost : public Combiner<double> {
+class PRCombiner_ghost : public Combiner<double>
+{
 public:
     virtual void combine(double& old, const double& new_msg)
     {
