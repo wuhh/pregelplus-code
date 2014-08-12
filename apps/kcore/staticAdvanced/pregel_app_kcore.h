@@ -5,13 +5,13 @@
 #include <cassert>
 using namespace std;
 const int inf = 1000000000;
-struct kcorexValue {
+struct kcoreValue {
     int K;
     vector<VertexID> edges;
     vector<int> p;
 };
 
-ibinstream& operator<<(ibinstream& m, const kcorexValue& v)
+ibinstream& operator<<(ibinstream& m, const kcoreValue& v)
 {
     m << v.K;
     m << v.edges;
@@ -19,7 +19,7 @@ ibinstream& operator<<(ibinstream& m, const kcorexValue& v)
     return m;
 }
 
-obinstream& operator>>(obinstream& m, kcorexValue& v)
+obinstream& operator>>(obinstream& m, kcoreValue& v)
 {
     m >> v.K;
     m >> v.edges;
@@ -32,9 +32,9 @@ bool intpaircmp(const intpair& p1, const intpair& p2)
 {
     return p1.v1 < p2.v1; //id
 }
-class kcorexVertex : public Vertex<VertexID, kcorexValue, intpair> {
+class kcoreVertex : public Vertex<VertexID, kcoreValue, intpair> {
 public:
-    int subfunc(kcorexVertex* v)
+    int subfunc(kcoreVertex* v)
     {
         vector<VertexID>& edges = v->value().edges;
         vector<int>& p = v->value().p;
@@ -90,14 +90,14 @@ public:
     }
 };
 
-class kcorexWorker : public Worker<kcorexVertex> {
+class kcoreWorker : public Worker<kcoreVertex> {
     char buf[100];
 
 public:
     //C version
-    virtual kcorexVertex* toVertex(char* line)
+    virtual kcoreVertex* toVertex(char* line)
     {
-        kcorexVertex* v = new kcorexVertex;
+        kcoreVertex* v = new kcoreVertex;
         istringstream ssin(line);
         ssin >> v->id;
         int num;
@@ -112,21 +112,21 @@ public:
         return v;
     }
 
-    virtual void toline(kcorexVertex* v, BufferedWriter& writer)
+    virtual void toline(kcoreVertex* v, BufferedWriter& writer)
     {
         sprintf(buf, "%d\t%d\n", v->id, v->value().K);
         writer.write(buf);
     }
 };
 
-void pregel_kcorex(string in_path, string out_path)
+void pregel_kcore(string in_path, string out_path)
 {
     WorkerParams param;
     param.input_path = in_path;
     param.output_path = out_path;
     param.force_write = true;
     param.native_dispatcher = false;
-    kcorexWorker worker;
+    kcoreWorker worker;
 
     worker.run(param);
 }

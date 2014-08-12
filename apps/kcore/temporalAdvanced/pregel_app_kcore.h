@@ -5,13 +5,13 @@
 #include <cassert>
 using namespace std;
 const int inf = 1000000000;
-struct kcoreT2Value {
+struct kcoreValue {
     vector<intpair> K; // K, T
     vector<intpair> edges; // vid, no of edges
     vector<int> p;
 };
 
-ibinstream& operator<<(ibinstream& m, const kcoreT2Value& v)
+ibinstream& operator<<(ibinstream& m, const kcoreValue& v)
 {
     m << v.K;
     m << v.edges;
@@ -19,7 +19,7 @@ ibinstream& operator<<(ibinstream& m, const kcoreT2Value& v)
     return m;
 }
 
-obinstream& operator>>(obinstream& m, kcoreT2Value& v)
+obinstream& operator>>(obinstream& m, kcoreValue& v)
 {
     m >> v.K;
     m >> v.edges;
@@ -30,11 +30,11 @@ bool intpaircmp(const intpair& p1, const intpair& p2)
 {
     return p1.v2 > p2.v2; //id
 }
-class kcoreT2Vertex : public Vertex<VertexID, kcoreT2Value, intpair> {
+class kcoreVertex : public Vertex<VertexID, kcoreValue, intpair> {
 public:
     int currentT;
 
-    int subfunc(kcoreT2Vertex* v)
+    int subfunc(kcoreVertex* v)
     {
         vector<intpair>& edges = v->value().edges;
         vector<int>& p = v->value().p;
@@ -117,7 +117,7 @@ public:
         vote_to_halt();
     }
 };
-class kcoreT2Agg : public Aggregator<kcoreT2Vertex, int, int> {
+class kcoreAgg : public Aggregator<kcoreVertex, int, int> {
 private:
     int currentT;
 
@@ -127,7 +127,7 @@ public:
         currentT = inf;
     }
 
-    virtual void stepPartial(kcoreT2Vertex* v)
+    virtual void stepPartial(kcoreVertex* v)
     {
         if (v->value().edges.size() != 0) {
             currentT = min(currentT, v->value().edges.back().v2);
@@ -150,14 +150,14 @@ public:
         return &currentT;
     }
 };
-class kcoreT2Worker : public Worker<kcoreT2Vertex, kcoreT2Agg> {
+class kcoreWorker : public Worker<kcoreVertex, kcoreAgg> {
     char buf[100];
 
 public:
     //C version
-    virtual kcoreT2Vertex* toVertex(char* line)
+    virtual kcoreVertex* toVertex(char* line)
     {
-        kcoreT2Vertex* v = new kcoreT2Vertex;
+        kcoreVertex* v = new kcoreVertex;
         istringstream ssin(line);
         ssin >> v->id;
         int num;
@@ -175,7 +175,7 @@ public:
         return v;
     }
 
-    virtual void toline(kcoreT2Vertex* v, BufferedWriter& writer)
+    virtual void toline(kcoreVertex* v, BufferedWriter& writer)
     {
         vector<intpair>& Kvec = v->value().K;
         if (Kvec.size() >= 2) {
@@ -197,15 +197,15 @@ public:
     }
 };
 
-void pregel_kcoreT2(string in_path, string out_path)
+void pregel_kcore(string in_path, string out_path)
 {
     WorkerParams param;
     param.input_path = in_path;
     param.output_path = out_path;
     param.force_write = true;
     param.native_dispatcher = false;
-    kcoreT2Worker worker;
-    kcoreT2Agg agg;
+    kcoreWorker worker;
+    kcoreAgg agg;
     worker.setAggregator(&agg);
     worker.run(param, inf);
 }

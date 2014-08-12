@@ -1,9 +1,9 @@
-#include "pregel_app_kcorex.h"
+#include "pregel_app_kcore.h"
 
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_kcorex("/pullgel/btc", "/exp/kcorex");
+    pregel_kcore("/temp/dblp", "/exp/kcorex");
     worker_finalize();
     return 0;
 }
