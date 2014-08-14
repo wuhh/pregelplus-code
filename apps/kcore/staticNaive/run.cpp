@@ -3,7 +3,7 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_kcore("/pullgel/btc", "/exp/kcore");
+    pregel_kcore("/huan/dblp", "/huan/dblp_out");
     worker_finalize();
     return 0;
 }

@@ -57,6 +57,12 @@ ibinstream& operator<<(ibinstream& m, int i)
     return m;
 }
 
+ibinstream& operator<<(ibinstream& m, float i)
+{
+    m.raw_bytes(&i, sizeof(float));
+    return m;
+}
+
 ibinstream& operator<<(ibinstream& m, double i)
 {
     m.raw_bytes(&i, sizeof(double));
@@ -90,6 +96,14 @@ ibinstream& operator<<(ibinstream& m, const vector<int>& v)
 {
     m << v.size();
     m.raw_bytes(&v[0], v.size() * sizeof(int));
+    return m;
+}
+
+template <>
+ibinstream& operator<<(ibinstream& m, const vector<float>& v)
+{
+    m << v.size();
+    m.raw_bytes(&v[0], v.size() * sizeof(float));
     return m;
 }
 
@@ -204,6 +218,12 @@ obinstream& operator>>(obinstream& m, int& i)
     return m;
 }
 
+obinstream& operator>>(obinstream& m, float& i)
+{
+    i = *(float*)m.raw_bytes(sizeof(float));
+    return m;
+}
+
 obinstream& operator>>(obinstream& m, double& i)
 {
     i = *(double*)m.raw_bytes(sizeof(double));
@@ -245,6 +265,18 @@ obinstream& operator>>(obinstream& m, vector<int>& v)
     v.assign(data, data + size);
     return m;
 }
+
+template <>
+obinstream& operator>>(obinstream& m, vector<float>& v)
+{
+    size_t size;
+    m >> size;
+    v.resize(size);
+    float* data = (float*)m.raw_bytes(sizeof(float) * size);
+    v.assign(data, data + size);
+    return m;
+}
+
 
 template <>
 obinstream& operator>>(obinstream& m, vector<double>& v)
