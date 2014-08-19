@@ -254,7 +254,7 @@ public:
     {
         if (strlen(outpath) == 0) {
             if (_my_rank == MASTER_RANK)
-                cout << "Skip Dumping phase." << endl;
+                cout << "Skip Writing Data." << endl;
             return;
         }
         hdfsFS fs = getHdfsFS();
