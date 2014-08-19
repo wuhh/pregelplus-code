@@ -69,7 +69,6 @@ ibinstream& operator<<(ibinstream& m, float i)
     return m;
 }
 
-
 ibinstream& operator<<(ibinstream& m, char c)
 {
     m.raw_byte(c);
@@ -91,7 +90,6 @@ ibinstream& operator<<(ibinstream& m, const vector<T>& v)
     }
     return m;
 }
-
 
 template <class T>
 ibinstream& operator<<(ibinstream& m, const set<T>& v)
@@ -208,7 +206,6 @@ obinstream& operator>>(obinstream& m, float& i)
     return m;
 }
 
-
 obinstream& operator>>(obinstream& m, char& c)
 {
     c = m.raw_byte();
@@ -233,7 +230,6 @@ obinstream& operator>>(obinstream& m, vector<T>& v)
     }
     return m;
 }
-
 
 template <class T>
 obinstream& operator>>(obinstream& m, set<T>& v)

@@ -135,7 +135,6 @@ struct inttriplet {
     }
 };
 
-
 class IntTripletHash {
 public:
     inline int operator()(inttriplet key)
