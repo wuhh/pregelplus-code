@@ -60,6 +60,20 @@ struct intpair {
     }
 };
 
+ibinstream& operator<<(ibinstream& m, const intpair& v)
+{
+    m << v.v1;
+    m << v.v2;
+    return m;
+}
+
+obinstream& operator>>(obinstream& m, intpair& v)
+{
+    m >> v.v1;
+    m >> v.v2;
+    return m;
+}
+
 class IntPairHash {
 public:
     inline int operator()(intpair key)
@@ -135,6 +149,22 @@ struct inttriplet {
     }
 };
 
+ibinstream& operator<<(ibinstream& m, const inttriplet& v)
+{
+    m << v.v1;
+    m << v.v2;
+    m << v.v3;
+    return m;
+}
+
+obinstream& operator>>(obinstream& m, inttriplet& v)
+{
+    m >> v.v1;
+    m >> v.v2;
+    m >> v.v3;
+    return m;
+}
+
 class IntTripletHash {
 public:
     inline int operator()(inttriplet key)
@@ -198,6 +228,20 @@ struct vwpair {
         return wid; //the only difference from intpair
     }
 };
+
+ibinstream& operator<<(ibinstream& m, const vwpair& v)
+{
+    m << v.vid;
+    m << v.wid;
+    return m;
+}
+
+obinstream& operator>>(obinstream& m, vwpair& v)
+{
+    m >> v.vid;
+    m >> v.wid;
+    return m;
+}
 
 class VWPairHash {
 public:
