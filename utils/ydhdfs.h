@@ -204,33 +204,31 @@ int dirCheck(const char* indir, const char* outdir, bool print, bool force) //re
         hdfsDisconnect(fs);
         return -1;
     }
-    if (strlen(outdir) > 0) {
-        if (hdfsExists(fs, outdir) == 0) {
-            if (force) {
-                if (hdfsDelete(fs, outdir) == -1) {
-                    if (print)
-                        fprintf(stderr, "Error deleting %s!\n", outdir);
-                    exit(-1);
-                }
-                int created = hdfsCreateDirectory(fs, outdir);
-                if (created == -1) {
-                    if (print)
-                        fprintf(stderr, "Failed to create folder %s!\n", outdir);
-                    exit(-1);
-                }
-            } else {
+    if (hdfsExists(fs, outdir) == 0) {
+        if (force) {
+            if (hdfsDelete(fs, outdir) == -1) {
                 if (print)
-                    fprintf(stderr, "Output path \"%s\" already exists!\n", outdir);
-                hdfsDisconnect(fs);
-                return -1;
+                    fprintf(stderr, "Error deleting %s!\n", outdir);
+                exit(-1);
             }
-        } else {
             int created = hdfsCreateDirectory(fs, outdir);
             if (created == -1) {
                 if (print)
                     fprintf(stderr, "Failed to create folder %s!\n", outdir);
                 exit(-1);
             }
+        } else {
+            if (print)
+                fprintf(stderr, "Output path \"%s\" already exists!\n", outdir);
+            hdfsDisconnect(fs);
+            return -1;
+        }
+    } else {
+        int created = hdfsCreateDirectory(fs, outdir);
+        if (created == -1) {
+            if (print)
+                fprintf(stderr, "Failed to create folder %s!\n", outdir);
+            exit(-1);
         }
     }
     hdfsDisconnect(fs);

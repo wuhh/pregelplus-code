@@ -252,11 +252,6 @@ public:
 
     void dump_partition(const char* outpath)
     {
-        if (strlen(outpath) == 0) {
-            if (_my_rank == MASTER_RANK)
-                cout << "Skip Writing Data." << endl;
-            return;
-        }
         hdfsFS fs = getHdfsFS();
         BufferedWriter* writer = new BufferedWriter(outpath, fs, _my_rank);
 
