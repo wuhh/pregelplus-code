@@ -311,6 +311,7 @@ public:
         long long step_vadd_num;
         long long global_msg_num = 0;
         long long global_vadd_num = 0;
+        clearBits();
         while (true) {
             global_step_num++;
             ResetTimer(4);
