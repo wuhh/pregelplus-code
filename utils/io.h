@@ -12,6 +12,17 @@
 #include "global.h"
 using namespace std;
 
+
+
+
+/**
+ *  \ingroup utility
+ *  \brief wrapper for hdfs
+ */
+
+
+
+
 #define HDFS_BUF_SIZE 65536
 #define LINE_DEFAULT_SIZE 4096
 #define HDFS_BLOCK_SIZE 8388608 //8M
