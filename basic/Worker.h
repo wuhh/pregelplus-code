@@ -223,8 +223,6 @@ public:
         }
     }
 
-    //user-defined graphLoader ==============================
-    virtual VertexT* toVertex(const char* line) = 0; //this is what user specifies!!!!!!
 
     void loadFiles(const vector<string>& assignedSplits)
     {
@@ -317,6 +315,10 @@ public:
 
     //user-defined graphDumper ==============================
     virtual void toline(VertexT* v, BufferedWriter& writer) = 0; //this is what user specifies!!!!!!
+    //user-defined graphLoader ==============================
+    virtual VertexT* toVertex(const char* line) = 0; //this is what user specifies!!!!!!
+
+    virtual void phaseCompute(); // before each phase
 
     void dumpGraph(const char* outpath)
     {
@@ -382,6 +384,9 @@ public:
                 cout << "################ Phase " << global_phase_num
                      << " ################" << endl;
             }
+
+            // phase compute
+            phaseCompute();
 
             // global variables initialization
             global_step_num = 0;
