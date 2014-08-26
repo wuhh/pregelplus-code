@@ -486,7 +486,7 @@ public:
         dumpGraph(params.output_path.c_str());
     }
 
-    void run(const WorkerParams& params)
+    void run(const WorkerParams& params, int num_phases = 1)
     {
 
         //================== Data Loading ====================================
@@ -499,7 +499,7 @@ public:
         loadGraph(params.input_path.c_str(), params.native_dispatcher);
 
         //================== Compute ====================================
-        compute();
+        compute(num_phases);
 
         //================== Dumping ====================================
 
