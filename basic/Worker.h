@@ -129,6 +129,7 @@ public:
     }
     void activate_all()
     {
+        active_count = vertexes.size();
         for (int i = 0; i < vertexes.size(); i++) {
             if (!vertexes[i]->is_active()) {
                 vertexes[i]->activate();
@@ -318,7 +319,8 @@ public:
     //user-defined graphLoader ==============================
     virtual VertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
 
-    virtual void phaseCompute(){} // before each phase
+    virtual void prePhaseCompute(){} // before each phase
+    virtual void postPhaseCompute(){} // before each phase
 
     void dumpGraph(const char* outpath)
     {
@@ -376,8 +378,8 @@ public:
 
         clearBits();
         long long global_msg_num = 0, global_vadd_num = 0;
-
-        for (global_phase_num = 1; global_phase_num <= num_phases;
+        bool terminate = false;
+        for (global_phase_num = 1; global_phase_num <= num_phases && !terminate ;
              global_phase_num++) {
 
             if (_my_rank == MASTER_RANK && num_phases > 1) {
@@ -385,8 +387,8 @@ public:
                      << " ################" << endl;
             }
 
-            // phase compute
-            phaseCompute();
+            // prePhase compute
+            prePhaseCompute();
 
             // global variables initialization
             global_step_num = 0;
@@ -398,7 +400,10 @@ public:
                 char bits_bor = all_bor(global_bor_bitmap);
                 // check forceTerminate
                 if (getBit(FORCE_TERMINATE_ORBIT, bits_bor) == 1)
+                {
+                    terminate = true;
                     break;
+                }
                 // update vnum
                 get_vnum() = all_sum(vertexes.size());
 
@@ -461,6 +466,10 @@ public:
             if (num_phases > 1) {
                 activate_all();
             }
+            // postPhase compute
+            postPhaseCompute();
+
+
         }
         StopTimer(WORKER_TIMER);
         PrintTimer("Communication Time", COMMUNICATION_TIMER);
