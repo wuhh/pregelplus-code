@@ -174,7 +174,7 @@ struct BufferedReader {
         bufPos = 0;
     }
 
-    const char* getLine()
+    char* getLine()
     {
         if (eof)
             return NULL;
@@ -196,7 +196,7 @@ struct BufferedReader {
             line.append(buf + bufPos, length);
             bufPos += length + 1; //+1 to skip '\n'
         }
-        return line.c_str();
+        return const_cast<char*>(line.c_str());
     }
 };
 

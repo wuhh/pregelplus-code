@@ -150,7 +150,7 @@ class kcoreWorker : public Worker<kcoreVertex, kcoreAgg> {
 public:
         
     //C version
-    virtual kcoreVertex* toVertex(const char* line)
+    virtual kcoreVertex* toVertex(char* line)
     {
         kcoreVertex* v = new kcoreVertex;
         istringstream ssin(line);

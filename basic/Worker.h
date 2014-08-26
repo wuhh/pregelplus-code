@@ -224,12 +224,12 @@ public:
     }
 
 
-    void loadFiles(const vector<string>& assignedSplits)
+    void loadFiles(vector<string>& assignedSplits)
     {
         hdfsFS fs = getHdfsFS();
         for (int i = 0; i < assignedSplits.size(); i++) {
             BufferedReader reader(assignedSplits[i].c_str(), fs);
-            const char* line = 0;
+            char* line = 0;
             while ((line = reader.getLine()) != NULL) {
                 VertexT* v = toVertex(line);
                 if (v != NULL)
@@ -316,7 +316,7 @@ public:
     //user-defined graphDumper ==============================
     virtual void toline(VertexT* v, BufferedWriter& writer) = 0; //this is what user specifies!!!!!!
     //user-defined graphLoader ==============================
-    virtual VertexT* toVertex(const char* line) = 0; //this is what user specifies!!!!!!
+    virtual VertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
 
     virtual void phaseCompute(){} // before each phase
 
