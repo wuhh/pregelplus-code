@@ -205,14 +205,12 @@ struct BufferedReader {
  */
 
 struct BufferedWriter {
-    std::string buf;
-
     hdfsFS fs;
-    hdfsFile curHdl;
-
     const char* path;
     int me; //-1 if there's no concept of machines (like: hadoop fs -put)
     int nxtPart;
+    vector<char> buf;
+    hdfsFile curHdl;
 
     BufferedWriter(const char* path, hdfsFS fs)
     {
@@ -227,12 +225,13 @@ struct BufferedWriter {
         this->path = path;
         this->fs = fs;
         this->me = me;
+        curHdl = NULL;
         nextHdl();
     }
 
     ~BufferedWriter()
     {
-        tSize numWritten = hdfsWrite(fs, curHdl, buf.c_str(), buf.length());
+        tSize numWritten = hdfsWrite(fs, curHdl, &buf[0], buf.size());
         if (numWritten == -1) {
             fprintf(stderr, "Failed to write file!\n");
             exit(-1);
@@ -276,7 +275,7 @@ struct BufferedWriter {
 
     void check()
     {
-        if (buf.length() >= HDFS_BLOCK_SIZE) {
+        if (buf.size() >= HDFS_BLOCK_SIZE) {
             tSize numWritten = hdfsWrite(fs, curHdl, &buf[0], buf.size());
             if (numWritten == -1) {
                 fprintf(stderr, "Failed to write file!\n");
@@ -292,7 +291,8 @@ struct BufferedWriter {
 
     void write(const char* content)
     {
-        buf.append(content);
+        int len = strlen(content);
+        buf.insert(buf.end(), content, content + len);
     }
 };
 
