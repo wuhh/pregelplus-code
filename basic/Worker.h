@@ -221,10 +221,10 @@ public:
     {
         BufferedReader reader(inpath, fs);
         const char* line = 0;
-	    while ((line = reader.getLine()) != NULL) {
-                VertexT* v = toVertex(line);
-                if(v != NULL)
-                    add_vertex(v);
+        while ((line = reader.getLine()) != NULL) {
+            VertexT* v = toVertex(line);
+            if (v != NULL)
+                add_vertex(v);
         }
     }
     void loadFiles(const vector<string>& assignedSplits)
@@ -260,7 +260,7 @@ public:
 
     int checkIODirectory(const char* input, const char* output, bool force)
     {
-         //check path + init
+        //check path + init
         if (_my_rank == MASTER_RANK) {
             if (dirCheck(input) == -1)
                 return -1;
@@ -273,7 +273,7 @@ public:
     void run(const WorkerParams& params)
     {
         checkIODirectory(params.input_path.c_str(), params.output_path.c_str(), params.force_write);
-        
+
         init_timers();
         //dispatch splits
         ResetTimer(WORKER_TIMER);
