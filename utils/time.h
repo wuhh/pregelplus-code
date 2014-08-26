@@ -33,9 +33,10 @@ enum TIMERS {
     WORKER_TIMER = 0,
     SERIALIZATION_TIMER = 1,
     TRANSFER_TIMER = 2,
-    COMMUNICATION_TIMER = 3
+    COMMUNICATION_TIMER = 3,
+    SUPERSTEP_TIMER = 4
 };
-//currently, only 4 timers are used, others can be defined by users
+//currently, only 5 timers are used, others can be defined by users
 
 void start_timer(int i)
 {
