@@ -2,33 +2,23 @@
 #define IO_H_
 
 #include "hdfs.h"
-#include <string.h> //memcpy, memchr
-#include <stdlib.h> //realloc
+#include <cstring>
+#include <cstdlib> //realloc
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include "global.h"
-using namespace std;
-
-
-
-
-/**
- *  \ingroup utility
- *  \brief wrapper for hdfs
- */
-
-
-
 
 #define HDFS_BUF_SIZE 65536
 #define LINE_DEFAULT_SIZE 4096
 #define HDFS_BLOCK_SIZE 8388608 //8M
 //====== get File System ======
-hdfsFS getHdfsFS() {
-	hdfsFS fs = hdfsConnect("master", 9000);
+hdfsFS getHdfsFS()
+{
+hdfsFS
+	fs = hdfsConnect("master", 9000);
 	if (!fs) {
 		fprintf(stderr, "Failed to connect to HDFS!\n");
 		exit(-1);
@@ -74,111 +64,10 @@ hdfsFile getRWHandle(const char* path, hdfsFS fs) {
 	return hdl;
 }
 
-//====== Read line ======
-
-//logic:
-//buf[] is for batch reading from HDFS file
-//line[] is a line buffer, the string length is "length", the buffer size is "size"
-//after each readLine(), need to check eof(), if it's true, no line is read due to EOF
-struct LineReader {
-	//static fields
-	char buf[HDFS_BUF_SIZE];
-	tSize bufPos;
-	tSize bufSize;
-	hdfsFS fs;
-	hdfsFile handle;
-	bool fileEnd;
-
-	//dynamic fields
-	char* line;
-	int length;
-	int size;
-
-	LineReader(hdfsFS& fs, hdfsFile& handle) :
-			bufPos(0), length(0), size(LINE_DEFAULT_SIZE) {
-		this->fs = fs;
-		this->handle = handle;
-		fileEnd = false;
-		fill();
-		line = (char*) malloc(LINE_DEFAULT_SIZE * sizeof(char));
-	}
-
-	~LineReader() {
-		free(line);
-	}
-
-	//internal use only!
-	void doubleLineBuf() {
-		size *= 2;
-		line = (char*) realloc(line, size * sizeof(char));
-	}
-
-	//internal use only!
-	void lineAppend(char* first, int num) {
-		while (length + num + 1 > size)
-			doubleLineBuf();
-		memcpy(line + length, first, num);
-		length += num;
-	}
-
-	//internal use only!
-	void fill() {
-		bufSize = hdfsRead(fs, handle, buf, HDFS_BUF_SIZE);
-		if (bufSize == -1) {
-			fprintf(stderr, "Read Failure!\n");
-			exit(-1);
-		}
-		bufPos = 0;
-		if (bufSize < HDFS_BUF_SIZE)
-			fileEnd = true;
-	}
-
-	//user interface
-	//the line starts at "line", with "length" chars
-	void readLine() {
-		length = 0;
-		if (bufPos == bufSize)
-			return;
-		char* pch = (char*) memchr(buf + bufPos, '\n', bufSize - bufPos);
-		if (pch == NULL) {
-			lineAppend(buf + bufPos, bufSize - bufPos);
-			bufPos = bufSize;
-			if (!fileEnd)
-				fill();
-			else
-				return;
-			pch = (char*) memchr(buf, '\n', bufSize);
-			while (pch == NULL) {
-				lineAppend(buf, bufSize);
-				if (!fileEnd)
-					fill();
-				else
-					return;
-				pch = (char*) memchr(buf, '\n', bufSize);
-			}
-		}
-		int validLen = pch - buf - bufPos;
-		lineAppend(buf + bufPos, validLen);
-		bufPos += validLen + 1; //+1 to skip '\n'
-		if (bufPos == bufSize) {
-			if (!fileEnd)
-				fill();
-			else
-				return;
-		}
-	}
-
-	char* getLine() {
-		line[length] = '\0';
-		return line;
-	}
-
-	bool eof() {
-		return length == 0 && fileEnd;
-	}
-};
-
-//====== Dir Creation ======
+/**
+ *  \brief create a directory on hdfs in the given path
+ *  \param [in] directory path
+ */
 
 int dirCreate(const char* path) {
 	hdfsFS fs = getHdfsFS();
@@ -191,7 +80,7 @@ int dirCreate(const char* path) {
 }
 
 /**
- *  \brief check the status of a give directory
+ *  \brief check the status of a given directory
  *  \param [in] directory path
  *  \param [in] mode (0): READ, mode (1): WRITE
  *  \param [in] force: write by force,
@@ -240,302 +129,82 @@ int dirCheck(const char* path, int mode = 0, bool force = true) /*mode: 0 read, 
 	return 0;
 }
 
-//====== Dir Check ======
-int dirCheck(const char* indir, const char* outdir, bool print, bool force) //returns -1 if fail, 0 if succeed
-		{
-	hdfsFS fs = getHdfsFS();
-	if (hdfsExists(fs, indir) != 0) {
-		if (print)
-			fprintf(stderr, "Input path \"%s\" does not exist!\n", indir);
-		hdfsDisconnect(fs);
-		return -1;
-	}
-	if (hdfsExists(fs, outdir) == 0) {
-		if (force) {
-			if (hdfsDelete(fs, outdir) == -1) {
-				if (print)
-					fprintf(stderr, "Error deleting %s!\n", outdir);
-				exit(-1);
-			}
-			int created = hdfsCreateDirectory(fs, outdir);
-			if (created == -1) {
-				if (print)
-					fprintf(stderr, "Failed to create folder %s!\n", outdir);
-				exit(-1);
-			}
-		} else {
-			if (print)
-				fprintf(stderr, "Output path \"%s\" already exists!\n", outdir);
-			hdfsDisconnect(fs);
-			return -1;
-		}
-	} else {
-		int created = hdfsCreateDirectory(fs, outdir);
-		if (created == -1) {
-			if (print)
-				fprintf(stderr, "Failed to create folder %s!\n", outdir);
-			exit(-1);
-		}
-	}
-	hdfsDisconnect(fs);
-	return 0;
-}
+/**
+ *  \brief A buffered LineReader
+ */
 
-int dirCheck(vector<string> indirs, const char* outdir, bool print, bool force) //returns -1 if fail, 0 if succeed
-		{
-	hdfsFS fs = getHdfsFS();
-	for (int i = 0; i < indirs.size(); i++) {
-		const char* indir = indirs[i].c_str();
-		if (hdfsExists(fs, indir) != 0) {
-			if (print)
-				fprintf(stderr, "Input path \"%s\" does not exist!\n", indir);
-			hdfsDisconnect(fs);
-			return -1;
-		}
-	}
-	if (hdfsExists(fs, outdir) == 0) {
-		if (force) {
-			if (hdfsDelete(fs, outdir) == -1) {
-				if (print)
-					fprintf(stderr, "Error deleting %s!\n", outdir);
-				exit(-1);
-			}
-			int created = hdfsCreateDirectory(fs, outdir);
-			if (created == -1) {
-				if (print)
-					fprintf(stderr, "Failed to create folder %s!\n", outdir);
-				exit(-1);
-			}
-		} else {
-			if (print)
-				fprintf(stderr, "Output path \"%s\" already exists!\n", outdir);
-			hdfsDisconnect(fs);
-			return -1;
-		}
-	} else {
-		int created = hdfsCreateDirectory(fs, outdir);
-		if (created == -1) {
-			if (print)
-				fprintf(stderr, "Failed to create folder %s!\n", outdir);
-			exit(-1);
-		}
-	}
-	hdfsDisconnect(fs);
-	return 0;
-}
+struct BufferedReader {
 
-int dirCheck(const char* outdir, bool force) //returns -1 if fail, 0 if succeed
-		{
-	hdfsFS fs = getHdfsFS();
-	if (hdfsExists(fs, outdir) == 0) {
-		if (force) {
-			if (hdfsDelete(fs, outdir) == -1) {
-				fprintf(stderr, "Error deleting %s!\n", outdir);
-				exit(-1);
-			}
-			int created = hdfsCreateDirectory(fs, outdir);
-			if (created == -1) {
-				fprintf(stderr, "Failed to create folder %s!\n", outdir);
-				exit(-1);
-			}
-		} else {
-			fprintf(stderr, "Output path \"%s\" already exists!\n", outdir);
-			hdfsDisconnect(fs);
-			return -1;
-		}
-	} else {
-		int created = hdfsCreateDirectory(fs, outdir);
-		if (created == -1) {
-			fprintf(stderr, "Failed to create folder %s!\n", outdir);
-			exit(-1);
-		}
-	}
-	hdfsDisconnect(fs);
-	return 0;
-}
+	char buf[HDFS_BUF_SIZE];
 
-//====== Write line ======
-
-const char* newLine = "\n";
-
-struct LineWriter {
 	hdfsFS fs;
-	const char* path;
-	int me; //-1 if there's no concept of machines (like: hadoop fs -put)
-	int nxtPart;
-	int curSize;
+	hdfsFile handle;
+	tSize bufPos;
+	tSize bufSize;
 
-	hdfsFile curHdl;
+	std::string line;
+	bool eof;
 
-	LineWriter(const char* path, hdfsFS fs, int me) :
-			nxtPart(0), curSize(0) {
-		this->path = path;
+	BufferedReader(const char* path, hdfsFS fs) {
 		this->fs = fs;
-		this->me = me;
-		curHdl = NULL;
-		//===============================
-		//if(overwrite==true) readDirForce();
-		//else readDirCheck();
-		//===============================
-		//1. cannot use above, otherwise multiple dir check/delete will be done during parallel writing
-		//2. before calling the constructor, make sure "path" does not exist
-		nextHdl();
+		this->handle = getRHandle(path, fs);
+		this->bufPos = 0;
+		this->bufSize = 0;
+
+		this->line = (char*) malloc(LINE_DEFAULT_SIZE * sizeof(char));
+		this->eof = false;
 	}
 
-	~LineWriter() {
-		if (hdfsFlush(fs, curHdl)) {
-			fprintf(stderr, "Failed to 'flush' %s\n", path);
+	void readChunk() {
+		bufSize = hdfsRead(fs, handle, buf, HDFS_BUF_SIZE);
+		if (bufSize == -1) {
+			fprintf(stderr, "Read Failure!\n");
 			exit(-1);
 		}
-		hdfsCloseFile(fs, curHdl);
+		if (bufSize == 0) {
+			eof = true;
+		}
+		bufPos = 0;
 	}
 
-	/*//================== not for parallel writing =====================
-	 //internal use only!
-	 void readDirCheck()
-	 {
-	 if(hdfsExists(fs, path)==0)
-	 {
-	 fprintf(stderr, "%s already exists!\n", path);
-	 exit(-1);
-	 }
-	 int created=hdfsCreateDirectory(fs, path);
-	 if(created==-1)
-	 {
-	 fprintf(stderr, "Failed to create folder %s!\n", path);
-	 exit(-1);
-	 }
-	 }
-
-	 //internal use only!
-	 void readDirForce()
-	 {
-	 if(hdfsExists(fs, path)==0)
-	 {
-	 if(hdfsDelete(fs, path)==-1)
-	 {
-	 fprintf(stderr, "Error deleting %s!\n", path);
-	 exit(-1);
-	 }
-	 }
-	 int created=hdfsCreateDirectory(fs, path);
-	 if(created==-1)
-	 {
-	 fprintf(stderr, "Failed to create folder %s!\n", path);
-	 exit(-1);
-	 }
-	 }
-	 */ //================== not for parallel writing =====================
-	//internal use only!
-	void nextHdl() {
-		//set fileName
-		char fname[20];
-		strcpy(fname, "part_");
-		char buffer[10];
-		if (me >= 0) {
-			sprintf(buffer, "%d", me);
-			strcat(fname, buffer);
-			strcat(fname, "_");
+	const char* getLine() {
+		if (eof)
+			return NULL;
+		line.clear();
+		char* pch;
+		while ((pch = (char*) memchr(buf + bufPos, '\n', bufSize - bufPos))
+				== NULL) {
+			// flush buffer
+			line.append(buf + bufPos, bufSize - bufPos);
+			// read more data into buffer
+			readChunk();
+			if (eof)
+				break;
 		}
-		sprintf(buffer, "%d", nxtPart);
-		strcat(fname, buffer);
-		//flush old file
-		if (nxtPart > 0) {
-			if (hdfsFlush(fs, curHdl)) {
-				fprintf(stderr, "Failed to 'flush' %s\n", path);
-				exit(-1);
-			}
-			hdfsCloseFile(fs, curHdl);
+		if (eof && line.empty())
+			return NULL;
+		if (pch != NULL) {
+			int length = pch - (buf + bufPos);
+			line.append(buf + bufPos, length);
+			bufPos += length + 1; //+1 to skip '\n'
 		}
-		//open new file
-		nxtPart++;
-		curSize = 0;
-		char* filePath = new char[strlen(path) + strlen(fname) + 2];
-		strcpy(filePath, path);
-		strcat(filePath, "/");
-		strcat(filePath, fname);
-		curHdl = getWHandle(filePath, fs);
-		delete[] filePath;
-	}
-
-	void writeLine(char* line, int num) {
-		if (curSize + num + 1 > HDFS_BLOCK_SIZE) //+1 because of '\n'
-		{
-			nextHdl();
-		}
-		tSize numWritten = hdfsWrite(fs, curHdl, line, num);
-		if (numWritten == -1) {
-			fprintf(stderr, "Failed to write file!\n");
-			exit(-1);
-		}
-		curSize += numWritten;
-		numWritten = hdfsWrite(fs, curHdl, newLine, 1);
-		if (numWritten == -1) {
-			fprintf(stderr, "Failed to create a new line!\n");
-			exit(-1);
-		}
-		curSize += 1;
+		return line.c_str();
 	}
 };
 
-//====== Put: local->HDFS ======
+/**
+ *  \brief A buffered Writer
+ */
 
-void put(char* localpath, char* hdfspath) {
-	if (dirCheck(hdfspath, false) == -1)
-		return;
-	hdfsFS fs = getHdfsFS();
-	hdfsFS lfs = getlocalFS();
-
-	hdfsFile in = getRHandle(localpath, lfs);
-	LineReader* reader = new LineReader(lfs, in);
-	LineWriter* writer = new LineWriter(hdfspath, fs, -1);
-	while (true) {
-		reader->readLine();
-		if (!reader->eof()) {
-			writer->writeLine(reader->line, reader->length);
-		} else
-			break;
-	}
-	hdfsCloseFile(lfs, in);
-	delete reader;
-	delete writer;
-
-	hdfsDisconnect(lfs);
-	hdfsDisconnect(fs);
-}
-
-void putf(char* localpath, char* hdfspath) //force put, overwrites target
-		{
-	dirCheck(hdfspath, true);
-	hdfsFS fs = getHdfsFS();
-	hdfsFS lfs = getlocalFS();
-
-	hdfsFile in = getRHandle(localpath, lfs);
-	LineReader* reader = new LineReader(lfs, in);
-	LineWriter* writer = new LineWriter(hdfspath, fs, -1);
-	while (true) {
-		reader->readLine();
-		if (!reader->eof()) {
-			writer->writeLine(reader->line, reader->length);
-		} else
-			break;
-	}
-	hdfsCloseFile(lfs, in);
-	delete reader;
-	delete writer;
-
-	hdfsDisconnect(lfs);
-	hdfsDisconnect(fs);
-}
-
-//====== BufferedWriter ======
 struct BufferedWriter {
+	std::string buf;
+
 	hdfsFS fs;
+	hdfsFile curHdl;
+
 	const char* path;
 	int me; //-1 if there's no concept of machines (like: hadoop fs -put)
 	int nxtPart;
-	vector<char> buf;
-	hdfsFile curHdl;
 
 	BufferedWriter(const char* path, hdfsFS fs) {
 		this->path = path;
@@ -548,12 +217,11 @@ struct BufferedWriter {
 		this->path = path;
 		this->fs = fs;
 		this->me = me;
-		curHdl = NULL;
 		nextHdl();
 	}
 
 	~BufferedWriter() {
-		tSize numWritten = hdfsWrite(fs, curHdl, &buf[0], buf.size());
+		tSize numWritten = hdfsWrite(fs, curHdl, buf.c_str(), buf.length());
 		if (numWritten == -1) {
 			fprintf(stderr, "Failed to write file!\n");
 			exit(-1);
@@ -595,7 +263,7 @@ struct BufferedWriter {
 	}
 
 	void check() {
-		if (buf.size() >= HDFS_BLOCK_SIZE) {
+		if (buf.length() >= HDFS_BLOCK_SIZE) {
 			tSize numWritten = hdfsWrite(fs, curHdl, &buf[0], buf.size());
 			if (numWritten == -1) {
 				fprintf(stderr, "Failed to write file!\n");
@@ -610,10 +278,36 @@ struct BufferedWriter {
 	}
 
 	void write(const char* content) {
-		int len = strlen(content);
-		buf.insert(buf.end(), content, content + len);
+		buf.append(content);
 	}
 };
+
+/**
+ *  \brief Put: local->HDFS
+ *  \param [in] local directory path
+ *  \param [in] hdfs directory path
+ *  \param [in] force: write by force,
+ */
+
+void putf(char* localpath, char* hdfspath, bool force = true) //force put, overwrites target
+		{
+	dirCheck(hdfspath, 1, force);
+
+	hdfsFS fs = getHdfsFS();
+	hdfsFS lfs = getlocalFS();
+
+	BufferedReader reader(localpath, lfs);
+	BufferedWriter writer(hdfspath, fs);
+
+	while (!reader.eof()) {
+		writer.check();
+		writer.write(reader.getLine());
+		writer.write("\n");
+	}
+
+	hdfsDisconnect(lfs);
+	hdfsDisconnect(fs);
+}
 
 //====== Dispatcher ======
 
