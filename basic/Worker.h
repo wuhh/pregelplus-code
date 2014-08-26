@@ -318,7 +318,7 @@ public:
     //user-defined graphLoader ==============================
     virtual VertexT* toVertex(const char* line) = 0; //this is what user specifies!!!!!!
 
-    virtual void phaseCompute(); // before each phase
+    virtual void phaseCompute(){} // before each phase
 
     void dumpGraph(const char* outpath)
     {
