@@ -417,10 +417,14 @@ public:
                         && getBit(HAS_MSG_ORBIT, bits_bor) == 0)
                         break; //all_halt AND no_msg
                 }
+                
                 // Aggregator Initialization
                 AggregatorT* agg = (AggregatorT*)get_aggregator();
+                
                 if (agg != NULL)
+                {
                     agg->init();
+                }
 
                 // clear Bits and compute
                 clearBits();
