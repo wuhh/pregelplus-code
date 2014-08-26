@@ -119,7 +119,7 @@ int dirCheck(const char* path, int mode = 0, bool force = true) /*mode: 0 read, 
 		} else {
 			int created = dirCreate(path);
 			if (created == -1) {
-				fprintf(stderr, "Failed to create folder %s!\n", outdir);
+				fprintf(stderr, "Failed to create folder %s!\n", path);
 				return -1;
 			}
 		}
@@ -298,10 +298,12 @@ void putf(char* localpath, char* hdfspath, bool force = true) //force put, overw
 
 	BufferedReader reader(localpath, lfs);
 	BufferedWriter writer(hdfspath, fs);
+    
+    const char* line = 0;
 
-	while (!reader.eof()) {
+	while ((line = reader.getLine()) != NULL) {
 		writer.check();
-		writer.write(reader.getLine());
+		writer.write(line);
 		writer.write("\n");
 	}
 

@@ -6,7 +6,7 @@
 #include "MessageBuffer.h"
 #include <string>
 #include "utils/communication.h"
-#include "utils/ydhdfs.h"
+#include "utils/io.h"
 #include "utils/Combiner.h"
 #include "utils/Aggregator.h"
 using namespace std;
@@ -215,32 +215,23 @@ public:
     }
 
     //user-defined graphLoader ==============================
-    virtual VertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
+    virtual VertexT* toVertex(const char* line) = 0; //this is what user specifies!!!!!!
 
-    void load_graph(const char* inpath, hdfsFS fs)
+    void loadGraph(const char* inpath, hdfsFS fs)
     {
-        hdfsFile in = getRHandle(inpath, fs);
-        LineReader reader(fs, in);
-        while (true) {
-            reader.readLine();
-            if (!reader.eof()) {
-                char* ch = reader.getLine();
-                VertexT* v = toVertex(ch);
-                //#pragma omp critical
-                //{
-                add_vertex(v);
-                //}
-            } else
-                break;
+        BufferedReader reader(inpath, fs);
+        const char* line = 0;
+	    while ((line = reader.getLine()) != NULL) {
+                VertexT* v = toVertex(line);
+                if(v != NULL)
+                    add_vertex(v);
         }
-        hdfsCloseFile(fs, in);
     }
-    void load_files(vector<string>& assignedSplits)
+    void loadFiles(const vector<string>& assignedSplits)
     {
         hdfsFS fs = getHdfsFS();
-        //#pragma omp parallel for
         for (int i = 0; i < assignedSplits.size(); i++) {
-            load_graph(assignedSplits[i].c_str(), fs);
+            loadGraph(assignedSplits[i].c_str(), fs);
         }
         hdfsDisconnect(fs);
     }
@@ -265,13 +256,24 @@ public:
     //=======================================================
 
     // run the worker
+    //
+
+    int checkIODirectory(const char* input, const char* output, bool force)
+    {
+         //check path + init
+        if (_my_rank == MASTER_RANK) {
+            if (dirCheck(input) == -1)
+                return -1;
+            if (dirCheck(output, 1, force) == -1)
+                return -1;
+        }
+        return 0;
+    }
+
     void run(const WorkerParams& params)
     {
-        //check path + init
-        if (_my_rank == MASTER_RANK) {
-            if (dirCheck(params.input_path.c_str(), params.output_path.c_str(), _my_rank == MASTER_RANK, params.force_write) == -1)
-                exit(-1);
-        }
+        checkIODirectory(params.input_path.c_str(), params.output_path.c_str(), params.force_write);
+        
         init_timers();
         //dispatch splits
         ResetTimer(WORKER_TIMER);
@@ -282,13 +284,13 @@ public:
             masterScatter(*arrangement);
             vector<string>& assignedSplits = (*arrangement)[0];
             //reading assigned splits (map)
-            load_files(assignedSplits);
+            loadFiles(assignedSplits);
             delete arrangement;
         } else {
             vector<string> assignedSplits;
             slaveScatter(assignedSplits);
             //reading assigned splits (map)
-            load_files(assignedSplits);
+            loadFiles(assignedSplits);
         }
 
         //send vertices according to hash_id (reduce)
@@ -372,7 +374,7 @@ public:
         StopTimer(WORKER_TIMER);
         PrintTimer("Dump Time", WORKER_TIMER);
     }
-
+    /*
     //run the worker
     void run(const WorkerParams& params, int num_phases)
     {
@@ -523,7 +525,8 @@ public:
         StopTimer(WORKER_TIMER);
         PrintTimer("Dump Time", WORKER_TIMER);
     }
-
+*/
+    /*
     // run the worker
     void run(const MultiInputParams& params)
     {
@@ -635,7 +638,8 @@ public:
         StopTimer(WORKER_TIMER);
         PrintTimer("Dump Time", WORKER_TIMER);
     }
-
+*/
+    /*
     //========================== reports machine-level msg# ===============================
     void run_report(const WorkerParams& params, const string reportPath)
     {
@@ -778,6 +782,7 @@ public:
             hdfsDisconnect(fs);
         }
     }
+*/
 
 private:
     HashT hash;

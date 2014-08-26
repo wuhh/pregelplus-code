@@ -65,7 +65,7 @@ class CCWorker_pregel : public Worker<CCVertex_pregel> {
 
 public:
     //C version
-    virtual CCVertex_pregel* toVertex(char* line)
+    virtual CCVertex_pregel* toVertex(const char* line)
     {
         CCVertex_pregel* v = new CCVertex_pregel;
         istringstream ssin(line);
