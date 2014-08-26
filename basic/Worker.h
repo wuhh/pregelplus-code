@@ -224,7 +224,6 @@ public:
         }
     }
 
-
     void loadFiles(vector<string>& assignedSplits)
     {
         hdfsFS fs = getHdfsFS();
@@ -319,8 +318,12 @@ public:
     //user-defined graphLoader ==============================
     virtual VertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
 
-    virtual void prePhaseCompute(){} // before each phase
-    virtual void postPhaseCompute(){} // before each phase
+    virtual void prePhaseCompute()
+    {
+    } // before each phase
+    virtual void postPhaseCompute()
+    {
+    } // before each phase
 
     void dumpGraph(const char* outpath)
     {
@@ -328,15 +331,15 @@ public:
         ResetTimer(WORKER_TIMER);
 
         hdfsFS fs = getHdfsFS();
-        BufferedWriter writer(outpath, fs, _my_rank);
+        BufferedWriter* writer = new BufferedWriter(outpath, fs, _my_rank);
 
         for (VertexIter it = vertexes.begin(); it != vertexes.end(); it++) {
-            writer.check();
-
+            writer->check();
             VertexT* v = *it;
-            toline(v, writer);
+            toline(v, *writer);
         }
 
+        delete writer;
         hdfsDisconnect(fs);
 
         StopTimer(WORKER_TIMER);
@@ -379,7 +382,7 @@ public:
         clearBits();
         long long global_msg_num = 0, global_vadd_num = 0;
         bool terminate = false;
-        for (global_phase_num = 1; global_phase_num <= num_phases && !terminate ;
+        for (global_phase_num = 1; global_phase_num <= num_phases && !terminate;
              global_phase_num++) {
 
             if (_my_rank == MASTER_RANK && num_phases > 1) {
@@ -399,8 +402,7 @@ public:
                 // bitmap sync
                 char bits_bor = all_bor(global_bor_bitmap);
                 // check forceTerminate
-                if (getBit(FORCE_TERMINATE_ORBIT, bits_bor) == 1)
-                {
+                if (getBit(FORCE_TERMINATE_ORBIT, bits_bor) == 1) {
                     terminate = true;
                     break;
                 }
@@ -417,12 +419,11 @@ public:
                         && getBit(HAS_MSG_ORBIT, bits_bor) == 0)
                         break; //all_halt AND no_msg
                 }
-                
+
                 // Aggregator Initialization
                 AggregatorT* agg = (AggregatorT*)get_aggregator();
-                
-                if (agg != NULL)
-                {
+
+                if (agg != NULL) {
                     agg->init();
                 }
 
@@ -472,8 +473,6 @@ public:
             }
             // postPhase compute
             postPhaseCompute();
-
-
         }
         StopTimer(WORKER_TIMER);
         PrintTimer("Communication Time", COMMUNICATION_TIMER);

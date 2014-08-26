@@ -1,6 +1,10 @@
 var NAVTREE =
 [
   [ "Pregel+: A Distributed Graph Computing Framework", "index.html", [
+    [ "Classes", null, [
+      [ "Class List", "annotated.html", "annotated" ],
+      [ "Class Index", "classes.html", null ]
+    ] ],
     [ "Files", null, [
       [ "File List", "files.html", "files" ]
     ] ]

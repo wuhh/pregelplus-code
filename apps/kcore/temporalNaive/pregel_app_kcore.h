@@ -148,7 +148,6 @@ class kcoreWorker : public Worker<kcoreVertex, kcoreAgg> {
     char buf[100];
 
 public:
-        
     //C version
     virtual kcoreVertex* toVertex(char* line)
     {

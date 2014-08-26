@@ -45,6 +45,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -89,7 +90,7 @@ $(document).ready(function(){initNavTree('GWorker_8h_source.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-</div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -351,12 +352,12 @@ $(document).ready(function(){initNavTree('GWorker_8h_source.html','');});
 <div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;    <span class="comment">//=======================================================</span></div>
 <div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;</div>
 <div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;    <span class="comment">//user-defined graphDumper ==============================</span></div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    <span class="keyword">virtual</span> <span class="keywordtype">void</span> toline(GVertexT* v, BufferedWriter&amp; writer) = 0; <span class="comment">//this is what user specifies!!!!!!</span></div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    <span class="keyword">virtual</span> <span class="keywordtype">void</span> toline(GVertexT* v, <a class="code" href="structBufferedWriter.html">BufferedWriter</a>&amp; writer) = 0; <span class="comment">//this is what user specifies!!!!!!</span></div>
 <div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;</div>
 <div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;    <span class="keywordtype">void</span> dump_partition(<span class="keyword">const</span> <span class="keywordtype">char</span>* outpath)</div>
 <div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;    {</div>
 <div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;        hdfsFS fs = getHdfsFS();</div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;        BufferedWriter* writer = <span class="keyword">new</span> BufferedWriter(outpath, fs, _my_rank);</div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;        <a class="code" href="structBufferedWriter.html">BufferedWriter</a>* writer = <span class="keyword">new</span> <a class="code" href="structBufferedWriter.html">BufferedWriter</a>(outpath, fs, _my_rank);</div>
 <div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;</div>
 <div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;        <span class="keywordflow">for</span> (VertexIter it = vertexes.begin(); it != vertexes.end(); it++) {</div>
 <div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;            writer-&gt;check();</div>
@@ -529,6 +530,7 @@ $(document).ready(function(){initNavTree('GWorker_8h_source.html','');});
 <div class="line"><a name="l00424"></a><span class="lineno">  424</span>&#160;</div>
 <div class="line"><a name="l00425"></a><span class="lineno">  425</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* GWORKER_H_ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="namespacestd_html"><div class="ttname"><a href="namespacestd.html">std</a></div></div>
+<div class="ttc" id="structBufferedWriter_html"><div class="ttname"><a href="structBufferedWriter.html">BufferedWriter</a></div><div class="ttdoc">A buffered Writer. </div><div class="ttdef"><b>Definition:</b> <a href="io_8h_source.html#l00207">io.h:207</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

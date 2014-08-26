@@ -107,5 +107,5 @@ void pregel_hashmin(string in_path, string out_path, bool use_combiner)
     CCCombiner_pregel combiner;
     if (use_combiner)
         worker.setCombiner(&combiner);
-    worker.run(param,2);
+    worker.run(param);
 }

@@ -45,6 +45,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -89,7 +90,7 @@ $(document).ready(function(){initNavTree('ydhdfs_8h_source.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-</div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -595,7 +596,7 @@ $(document).ready(function(){initNavTree('ydhdfs_8h_source.html','');});
 <div class="line"><a name="l00490"></a><span class="lineno">  490</span>&#160;}</div>
 <div class="line"><a name="l00491"></a><span class="lineno">  491</span>&#160;</div>
 <div class="line"><a name="l00492"></a><span class="lineno">  492</span>&#160;<span class="comment">//====== BufferedWriter ======</span></div>
-<div class="line"><a name="l00493"></a><span class="lineno">  493</span>&#160;<span class="keyword">struct </span>BufferedWriter {</div>
+<div class="line"><a name="l00493"></a><span class="lineno">  493</span>&#160;<span class="keyword">struct </span><a class="code" href="structBufferedWriter.html">BufferedWriter</a> {</div>
 <div class="line"><a name="l00494"></a><span class="lineno">  494</span>&#160;    hdfsFS fs;</div>
 <div class="line"><a name="l00495"></a><span class="lineno">  495</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">char</span>* path;</div>
 <div class="line"><a name="l00496"></a><span class="lineno">  496</span>&#160;    <span class="keywordtype">int</span> me; <span class="comment">//-1 if there&#39;s no concept of machines (like: hadoop fs -put)</span></div>
@@ -603,14 +604,14 @@ $(document).ready(function(){initNavTree('ydhdfs_8h_source.html','');});
 <div class="line"><a name="l00498"></a><span class="lineno">  498</span>&#160;    vector&lt;char&gt; buf;</div>
 <div class="line"><a name="l00499"></a><span class="lineno">  499</span>&#160;    hdfsFile curHdl;</div>
 <div class="line"><a name="l00500"></a><span class="lineno">  500</span>&#160;</div>
-<div class="line"><a name="l00501"></a><span class="lineno">  501</span>&#160;    BufferedWriter(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, hdfsFS fs)</div>
+<div class="line"><a name="l00501"></a><span class="lineno">  501</span>&#160;    <a class="code" href="structBufferedWriter.html">BufferedWriter</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, hdfsFS fs)</div>
 <div class="line"><a name="l00502"></a><span class="lineno">  502</span>&#160;    {</div>
 <div class="line"><a name="l00503"></a><span class="lineno">  503</span>&#160;        this-&gt;path = path;</div>
 <div class="line"><a name="l00504"></a><span class="lineno">  504</span>&#160;        this-&gt;fs = fs;</div>
 <div class="line"><a name="l00505"></a><span class="lineno">  505</span>&#160;        this-&gt;me = -1;</div>
 <div class="line"><a name="l00506"></a><span class="lineno">  506</span>&#160;        this-&gt;curHdl = getWHandle(this-&gt;path, fs);</div>
 <div class="line"><a name="l00507"></a><span class="lineno">  507</span>&#160;    }</div>
-<div class="line"><a name="l00508"></a><span class="lineno">  508</span>&#160;    BufferedWriter(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, hdfsFS fs, <span class="keywordtype">int</span> me)</div>
+<div class="line"><a name="l00508"></a><span class="lineno">  508</span>&#160;    <a class="code" href="structBufferedWriter.html">BufferedWriter</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, hdfsFS fs, <span class="keywordtype">int</span> me)</div>
 <div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;        : nxtPart(0)</div>
 <div class="line"><a name="l00510"></a><span class="lineno">  510</span>&#160;    {</div>
 <div class="line"><a name="l00511"></a><span class="lineno">  511</span>&#160;        this-&gt;path = path;</div>
@@ -620,7 +621,7 @@ $(document).ready(function(){initNavTree('ydhdfs_8h_source.html','');});
 <div class="line"><a name="l00515"></a><span class="lineno">  515</span>&#160;        nextHdl();</div>
 <div class="line"><a name="l00516"></a><span class="lineno">  516</span>&#160;    }</div>
 <div class="line"><a name="l00517"></a><span class="lineno">  517</span>&#160;</div>
-<div class="line"><a name="l00518"></a><span class="lineno">  518</span>&#160;    ~BufferedWriter()</div>
+<div class="line"><a name="l00518"></a><span class="lineno">  518</span>&#160;    ~<a class="code" href="structBufferedWriter.html">BufferedWriter</a>()</div>
 <div class="line"><a name="l00519"></a><span class="lineno">  519</span>&#160;    {</div>
 <div class="line"><a name="l00520"></a><span class="lineno">  520</span>&#160;        tSize numWritten = hdfsWrite(fs, curHdl, &amp;buf[0], buf.size());</div>
 <div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;        <span class="keywordflow">if</span> (numWritten == -1) {</div>
@@ -1064,6 +1065,7 @@ $(document).ready(function(){initNavTree('ydhdfs_8h_source.html','');});
 <div class="line"><a name="l00959"></a><span class="lineno">  959</span>&#160;</div>
 <div class="line"><a name="l00960"></a><span class="lineno">  960</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="namespacestd_html"><div class="ttname"><a href="namespacestd.html">std</a></div></div>
+<div class="ttc" id="structBufferedWriter_html"><div class="ttname"><a href="structBufferedWriter.html">BufferedWriter</a></div><div class="ttdoc">A buffered Writer. </div><div class="ttdef"><b>Definition:</b> <a href="io_8h_source.html#l00207">io.h:207</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
