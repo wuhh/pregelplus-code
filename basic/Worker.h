@@ -235,6 +235,10 @@ public:
 
     void loadGraph(const vector<string>& inputs, bool native_dispatcher)
     {
+        // Timer Initialization
+        init_timers();
+        ResetTimer(WORKER_TIMER);
+
         vector<vector<string> >* arrangement = NULL;
         if (_my_rank == MASTER_RANK) {
             if (native_dispatcher)
@@ -255,10 +259,22 @@ public:
 
         //send vertices according to hash_id (reduce)
         sync_graph();
+
+        // Msg Buffer Initialization
+        message_buffer->init(vertexes);
+
+        //barrier for data loading
+        worker_barrier(); //@@@@@@@@@@@@@
+        StopTimer(WORKER_TIMER);
+        PrintTimer("Load Time", WORKER_TIMER);
     }
 
     void loadGraph(const char* inpath, bool native_dispatcher)
     {
+        // Timer Initialization
+        init_timers();
+        ResetTimer(WORKER_TIMER);
+
         vector<vector<string> >* arrangement = NULL;
         if (_my_rank == MASTER_RANK) {
             if (native_dispatcher)
@@ -279,6 +295,14 @@ public:
 
         //send vertices according to hash_id (reduce)
         sync_graph();
+
+        // Msg Buffer Initialization
+        message_buffer->init(vertexes);
+
+        //barrier for data loading
+        worker_barrier(); //@@@@@@@@@@@@@
+        StopTimer(WORKER_TIMER);
+        PrintTimer("Load Time", WORKER_TIMER);
     }
 
     //=======================================================
@@ -300,7 +324,7 @@ public:
             VertexT* v = *it;
             toline(v, writer);
         }
-        
+
         hdfsDisconnect(fs);
 
         StopTimer(WORKER_TIMER);
@@ -428,20 +452,8 @@ public:
         checkIODirectory(params.input_paths, params.output_path.c_str(),
                          params.force_write);
 
-        // Timer Initialization
-        init_timers();
-        ResetTimer(WORKER_TIMER);
-
         // Load Graphs and Sync Vertices
         loadGraph(params.input_paths, params.native_dispatcher);
-
-        // Msg Buffer Initialization
-        message_buffer->init(vertexes);
-
-        //barrier for data loading
-        worker_barrier(); //@@@@@@@@@@@@@
-        StopTimer(WORKER_TIMER);
-        PrintTimer("Load Time", WORKER_TIMER);
 
         //================== Compute ====================================
         compute();
@@ -460,20 +472,8 @@ public:
         checkIODirectory(params.input_path.c_str(), params.output_path.c_str(),
                          params.force_write);
 
-        // Timer Initialization
-        init_timers();
-        ResetTimer(WORKER_TIMER);
-
         // Load Graphs and Sync Vertices
         loadGraph(params.input_path.c_str(), params.native_dispatcher);
-
-        // Msg Buffer Initialization
-        message_buffer->init(vertexes);
-
-        //barrier for data loading
-        worker_barrier(); //@@@@@@@@@@@@@
-        StopTimer(WORKER_TIMER);
-        PrintTimer("Load Time", WORKER_TIMER);
 
         //================== Compute ====================================
         compute();
