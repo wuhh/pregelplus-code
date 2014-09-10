@@ -6,7 +6,7 @@
 #include "GMessageBuffer.h"
 #include <string>
 #include "utils/communication.h"
-#include "utils/ydhdfs.h"
+#include "utils/io.h"
 #include "utils/Combiner.h"
 #include "utils/Aggregator.h"
 using namespace std;
@@ -224,27 +224,25 @@ public:
 
     //user-defined graphLoader ==============================
     virtual GVertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
-    
+
     void load_vertex(GVertexT* v)
     { //called by load_graph
         add_vertex(v);
     }
 
-    void load_graph(const char* inpath)
+    void loadFiles(vector<string>& assignedSplits)
     {
         hdfsFS fs = getHdfsFS();
-        hdfsFile in = getRHandle(inpath, fs);
-        LineReader reader(fs, in);
-        while (true) {
-            reader.readLine();
-            if (!reader.eof())
-                load_vertex(toVertex(reader.getLine()));
-            else
-                break;
+        for (int i = 0; i < assignedSplits.size(); i++) {
+            BufferedReader reader(assignedSplits[i].c_str(), fs);
+            char* line = 0;
+            while ((line = reader.getLine()) != NULL) {
+                GVertexT* v = toVertex(line);
+                if (v != NULL)
+                    add_vertex(v);
+            }
         }
-        hdfsCloseFile(fs, in);
         hdfsDisconnect(fs);
-        //cout<<"Worker "<<_my_rank<<": \""<<inpath<<"\" loaded"<<endl;//DEBUG !!!!!!!!!!
     }
 
     void dumpGraph(const char* outpath)
@@ -256,7 +254,7 @@ public:
 
         for (VertexIter it = vertexes.begin(); it != vertexes.end(); it++) {
             writer->check();
-            VertexT* v = *it;
+            GVertexT* v = *it;
             toline(v, *writer);
         }
 
@@ -267,7 +265,7 @@ public:
         PrintTimer("Dump Time", WORKER_TIMER);
     }
     //=======================================================
-    
+
     int checkIODirectory(const char* input, const char* output, bool force)
     {
         //check path + init
@@ -279,7 +277,7 @@ public:
         }
         return 0;
     }
-    
+
     void loadGraph(const char* inpath, bool native_dispatcher)
     {
         // Timer Initialization
@@ -315,7 +313,7 @@ public:
         StopTimer(WORKER_TIMER);
         PrintTimer("Load Time", WORKER_TIMER);
     }
-    
+
     void buildGhost()
     {
 
@@ -357,7 +355,7 @@ public:
         //supersteps
         global_step_num = 0;
         long long global_msg_num = 0, global_vadd_num = 0, global_gmsg_num = 0;
-        
+
         while (true) {
             global_step_num++;
             ResetTimer(4);
@@ -413,7 +411,6 @@ public:
         PrintTimer("Total Computational Time", WORKER_TIMER);
         if (_my_rank == MASTER_RANK)
             cout << "Total #msgs=" << global_msg_num << ", Total #vadd=" << global_vadd_num << ", Total #gmsg=" << global_gmsg_num << endl;
-
     }
     // run the worker
     void run(const WorkerParams& params)
@@ -428,7 +425,7 @@ public:
         loadGraph(params.input_path.c_str(), params.native_dispatcher);
         //set "ghosts"
         buildGhost();
-        
+
         //================== Compute ====================================
         compute();
 

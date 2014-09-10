@@ -23,7 +23,7 @@ obinstream& operator>>(obinstream& m, CCValue_pregel& v)
 
 //====================================
 
-class CCVertex_pregel : public Vertex<VertexID, CCValue_pregel, VertexID> {
+class CCVertex_pregel : public Vertex<size_t, CCValue_pregel, VertexID> {
 public:
     void broadcast(VertexID msg)
     {

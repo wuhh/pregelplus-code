@@ -95,6 +95,18 @@ struct hash<intpair> {
 };
 }
 
+namespace __gnu_cxx {
+template <>
+struct hash<long long> {
+    size_t operator()(long long v) const
+    {
+        size_t seed = 0;
+        hash_combine(seed, (int)v);
+        return seed;
+    }
+};
+}
+
 //============= int triplet =============
 struct inttriplet {
     int v1;
