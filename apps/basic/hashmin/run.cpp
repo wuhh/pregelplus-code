@@ -2,7 +2,7 @@
 int main(int argc, char* argv[])
 {
     init_workers();
-    pregel_hashmin("/pullgel/btc", "/exp/test", true);
+    pregel_hashmin("/data", "/exp/test", true);
     worker_finalize();
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <mpi.h>
 #include <stddef.h>
 #include <limits.h>
+#include <vector>
 #include <string>
 #include <ext/hash_set>
 #include <ext/hash_map>
