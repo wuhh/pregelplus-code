@@ -258,7 +258,7 @@ public:
 
         for (VertexIter it = vertexes.begin(); it != vertexes.end(); it++) {
             writer->check();
-            VertexT* v = *it;
+            RVertexT* v = *it;
             toline(v, *writer);
         }
 
@@ -268,7 +268,20 @@ public:
         StopTimer(WORKER_TIMER);
         PrintTimer("Dump Time", WORKER_TIMER);
     }
-    
+    void loadFiles(vector<string>& assignedSplits)
+    {
+        hdfsFS fs = getHdfsFS();
+        for (int i = 0; i < assignedSplits.size(); i++) {
+            BufferedReader reader(assignedSplits[i].c_str(), fs);
+            char* line = 0;
+            while ((line = reader.getLine()) != NULL) {
+                RVertexT* v = toVertex(line);
+                if (v != NULL)
+                    add_vertex(v);
+            }
+        }
+        hdfsDisconnect(fs);
+    }
     void loadGraph(const char* inpath, bool native_dispatcher)
     {
         // Timer Initialization
@@ -304,7 +317,7 @@ public:
         StopTimer(WORKER_TIMER);
         PrintTimer("Load Time", WORKER_TIMER);
     }
-    
+
     //=======================================================
 
     int checkIODirectory(const char* input, const char* output, bool force)
@@ -318,7 +331,7 @@ public:
         }
         return 0;
     }
-    
+
     void compute()
     {
         init_timers();
@@ -400,7 +413,6 @@ public:
         PrintTimer("Total Computational Time", WORKER_TIMER);
         if (_my_rank == MASTER_RANK)
             cout << "Total #msgs=" << global_msg_num << ", Total #vadd=" << global_vadd_num << ", Total #reqs=" << global_req_num << ", Total #resps=" << global_resp_num << endl;
-
     }
     // run the worker
     void run(const WorkerParams& params)
@@ -413,7 +425,7 @@ public:
 
         // Load Graphs and Sync Vertices
         loadGraph(params.input_path.c_str(), params.native_dispatcher);
-        
+
         //================== Compute ====================================
         compute();
 
