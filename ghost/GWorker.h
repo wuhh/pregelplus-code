@@ -219,9 +219,12 @@ public:
         }
     }
 
+    //user-defined graphDumper ==============================
+    virtual void toline(GVertexT* v, BufferedWriter& writer) = 0; //this is what user specifies!!!!!!
+
     //user-defined graphLoader ==============================
     virtual GVertexT* toVertex(char* line) = 0; //this is what user specifies!!!!!!
-
+    
     void load_vertex(GVertexT* v)
     { //called by load_graph
         add_vertex(v);
@@ -243,67 +246,79 @@ public:
         hdfsDisconnect(fs);
         //cout<<"Worker "<<_my_rank<<": \""<<inpath<<"\" loaded"<<endl;//DEBUG !!!!!!!!!!
     }
-    //=======================================================
 
-    //user-defined graphDumper ==============================
-    virtual void toline(GVertexT* v, BufferedWriter& writer) = 0; //this is what user specifies!!!!!!
-
-    void dump_partition(const char* outpath)
+    void dumpGraph(const char* outpath)
     {
+        ResetTimer(WORKER_TIMER);
+
         hdfsFS fs = getHdfsFS();
         BufferedWriter* writer = new BufferedWriter(outpath, fs, _my_rank);
 
         for (VertexIter it = vertexes.begin(); it != vertexes.end(); it++) {
             writer->check();
-            toline(*it, *writer);
+            VertexT* v = *it;
+            toline(v, *writer);
         }
+
         delete writer;
         hdfsDisconnect(fs);
+
+        StopTimer(WORKER_TIMER);
+        PrintTimer("Dump Time", WORKER_TIMER);
     }
     //=======================================================
-
-    // run the worker
-    void run(const WorkerParams& params)
+    
+    int checkIODirectory(const char* input, const char* output, bool force)
     {
         //check path + init
         if (_my_rank == MASTER_RANK) {
-            if (dirCheck(params.input_path.c_str(), params.output_path.c_str(), _my_rank == MASTER_RANK, params.force_write) == -1)
-                exit(-1);
+            if (dirCheck(input) == -1)
+                return -1;
+            if (dirCheck(output, 1, force) == -1)
+                return -1;
         }
+        return 0;
+    }
+    
+    void loadGraph(const char* inpath, bool native_dispatcher)
+    {
+        // Timer Initialization
         init_timers();
-
-        //dispatch splits
         ResetTimer(WORKER_TIMER);
-        vector<vector<string> >* arrangement;
+
+        vector<vector<string> >* arrangement = NULL;
         if (_my_rank == MASTER_RANK) {
-            arrangement = params.native_dispatcher ? dispatchLocality(params.input_path.c_str()) : dispatchRan(params.input_path.c_str());
-            //reportAssignment(arrangement);//DEBUG !!!!!!!!!!
+            if (native_dispatcher)
+                arrangement = dispatchLocality(inpath);
+            else
+                arrangement = dispatchRan(inpath);
+
             masterScatter(*arrangement);
             vector<string>& assignedSplits = (*arrangement)[0];
-            //reading assigned splits (map)
-            for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
-                load_graph(it->c_str());
+            loadFiles(assignedSplits);
             delete arrangement;
         } else {
             vector<string> assignedSplits;
             slaveScatter(assignedSplits);
             //reading assigned splits (map)
-            for (vector<string>::iterator it = assignedSplits.begin();
-                 it != assignedSplits.end(); it++)
-                load_graph(it->c_str());
+            loadFiles(assignedSplits);
         }
 
         //send vertices according to hash_id (reduce)
         sync_graph();
+
+        // Msg Buffer Initialization
         message_buffer->init(vertexes);
+
         //barrier for data loading
         worker_barrier(); //@@@@@@@@@@@@@
         StopTimer(WORKER_TIMER);
         PrintTimer("Load Time", WORKER_TIMER);
+    }
+    
+    void buildGhost()
+    {
 
-        //=========================================================
-        //set "ghosts"
         init_timers();
         ResetTimer(WORKER_TIMER);
         vector<vector<msgpair<KeyT, EdgeContainer> > > ghost_buf(_num_workers);
@@ -334,19 +349,15 @@ public:
         ghost_buf.clear();
         StopTimer(WORKER_TIMER);
         PrintTimer("Ghost Construction Time", WORKER_TIMER);
-
-        //=========================================================
-
+    }
+    void compute()
+    {
         init_timers();
         ResetTimer(WORKER_TIMER);
         //supersteps
         global_step_num = 0;
-        long long step_msg_num;
-        long long step_vadd_num;
-        long long step_gmsg_num;
-        long long global_msg_num = 0;
-        long long global_vadd_num = 0;
-        long long global_gmsg_num = 0;
+        long long global_msg_num = 0, global_vadd_num = 0, global_gmsg_num = 0;
+        
         while (true) {
             global_step_num++;
             ResetTimer(4);
@@ -373,9 +384,9 @@ public:
             else
                 active_compute();
             message_buffer->combine();
-            step_msg_num = master_sum_LL(message_buffer->get_total_msg());
-            step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
-            step_gmsg_num = master_sum_LL(message_buffer->get_total_gmsg());
+            long long step_msg_num = master_sum_LL(message_buffer->get_total_msg());
+            long long step_vadd_num = master_sum_LL(message_buffer->get_total_vadd());
+            long long step_gmsg_num = master_sum_LL(message_buffer->get_total_gmsg());
             if (_my_rank == MASTER_RANK) {
                 global_msg_num += step_msg_num;
                 global_vadd_num += step_vadd_num;
@@ -403,12 +414,27 @@ public:
         if (_my_rank == MASTER_RANK)
             cout << "Total #msgs=" << global_msg_num << ", Total #vadd=" << global_vadd_num << ", Total #gmsg=" << global_gmsg_num << endl;
 
-        // dump graph
-        ResetTimer(WORKER_TIMER);
-        dump_partition(params.output_path.c_str());
-        worker_barrier();
-        StopTimer(WORKER_TIMER);
-        PrintTimer("Dump Time", WORKER_TIMER);
+    }
+    // run the worker
+    void run(const WorkerParams& params)
+    {
+        //================== Data Loading ====================================
+
+        // Check IO Directory
+        checkIODirectory(params.input_path.c_str(), params.output_path.c_str(),
+                         params.force_write);
+
+        // Load Graphs and Sync Vertices
+        loadGraph(params.input_path.c_str(), params.native_dispatcher);
+        //set "ghosts"
+        buildGhost();
+        
+        //================== Compute ====================================
+        compute();
+
+        //================== Dumping ====================================
+
+        dumpGraph(params.output_path.c_str());
     }
 
 private:
