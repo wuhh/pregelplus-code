@@ -20,7 +20,7 @@ using namespace std;
 
 hdfsFS getHdfsFS()
 {
-    hdfsFS fs = hdfsConnect("localhost", 9000);
+    hdfsFS fs = hdfsConnect("master", 9000);
     if (!fs) {
         fprintf(stderr, "Failed to connect to HDFS!\n");
         exit(-1);
