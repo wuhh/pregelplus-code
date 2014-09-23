@@ -22,8 +22,7 @@ struct kcorex_gatherer {
 
     kcorex_gatherer(): P() {}
 
-    explicit kcorex_gatherer(int k): P(){
-        P.push_back(k);
+    explicit kcorex_gatherer(int k): P(1, k){
     }
 
     kcorex_gatherer& operator+=(const kcorex_gatherer& other){
@@ -64,7 +63,6 @@ class kcorex : public graphlab::ivertex_program<graph_type, kcorex_gatherer>,
                 const std::vector<int>& P = total.P;
                 std::vector<int> cd(vertex.data().phi + 2, 0);
                 for (int i = 0; i < P.size(); i++) {
-
                     cd[ std::min(P[i], vertex.data().phi) ]++;
                 }
                 for (int i = vertex.data().phi; i >= 1; i--) {
@@ -82,15 +80,17 @@ class kcorex : public graphlab::ivertex_program<graph_type, kcorex_gatherer>,
             edge_dir_type gather_edges(icontext_type& context,
                     const vertex_type& vertex) const
             {
-                return graphlab::ALL_EDGES;
+                return graphlab::IN_EDGES;
             }
             kcorex_gatherer gather(icontext_type& context, const vertex_type& vertex,
                     edge_type& edge) const {
-                return kcorex_gatherer(edge.target().data().phi);
+                return kcorex_gatherer(edge.source().data().phi);
             }
             void apply(icontext_type& context, vertex_type& vertex,
                     const gather_type& total)
             {
+                if(vertex.num_out_edges() == 0) return;
+
                 changed = false;
                 int x = subfunc(vertex, total);
                 if(x < vertex.data().phi)
@@ -104,7 +104,7 @@ class kcorex : public graphlab::ivertex_program<graph_type, kcorex_gatherer>,
                     const vertex_type& vertex) const
             {
                 if (changed)
-                    return graphlab::ALL_EDGES;
+                    return graphlab::OUT_EDGES;
                 else
                     return graphlab::NO_EDGES;
             }
@@ -112,6 +112,7 @@ class kcorex : public graphlab::ivertex_program<graph_type, kcorex_gatherer>,
             void scatter(icontext_type& context, const vertex_type& vertex,
                     edge_type& edge) const
             {
+                context.signal(edge.target());
             }
     };
 
