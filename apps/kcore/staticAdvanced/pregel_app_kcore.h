@@ -52,6 +52,10 @@ public:
                 send_message(edges[i], intpair(id, phi));
                 P[ edges[i] ] = inf;
             }
+            if(phi == 0)
+            {
+                vote_to_halt();
+            }
         } else {
             for (int i = 0; i < messages.size(); i++) {
                 int u = messages[i].v1;
@@ -67,13 +71,13 @@ public:
             if (x < phi) {
                 phi = x;
                 for (int i = 0; i < edges.size(); i++) {
-                    if (phi < P[i]) {
+                    if (phi < P[edges[i]]) {
                         send_message(edges[i], intpair(id, phi));
                     }
                 }
             }
+            vote_to_halt();
         }
-        vote_to_halt();
     }
 };
 
