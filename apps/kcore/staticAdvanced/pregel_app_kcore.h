@@ -41,8 +41,8 @@ public:
         int& K = v->value().K;
 
         vector<int> cd(K + 2, 0);
-
         for (int i = 0; i < edges.size(); i++) {
+
             if (p[i] > K)
                 p[i] = K;
             cd[p[i]]++;
