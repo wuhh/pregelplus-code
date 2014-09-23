@@ -32,9 +32,9 @@ public:
         vector<int> cd(phi + 2, 0);
         for (int i = 0; i < edges.size(); i++) {
 
-            if (P[i] > phi)
-                P[i] = phi;
-            cd[P[i]]++;
+            if (P[edges[i]] > phi)
+                P[edges[i]] = phi;
+            cd[P[edges[i]]]++;
         }
         for (int i = phi; i >= 1; i--) {
             cd[i] += cd[i + 1];
