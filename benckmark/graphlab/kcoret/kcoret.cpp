@@ -7,7 +7,7 @@
 
 
 const int inf = 1e9;
-int pi, min_pi, max_pi;
+int pi, max_pi;
 
 struct vertex_data : graphlab::IS_POD_TYPE {
     std::vector< std::pair<int, int> > phis;
@@ -20,15 +20,15 @@ struct vertex_data : graphlab::IS_POD_TYPE {
     }
     
     void save(graphlab::oarchive& oarc) const{
-        oarc << phi;
         oarc << phis.size();
         for(int i = 0; i < phis.size(); i ++)
         {
             oarc << phis[i].first << phis[i].second;
         }
+        oarc << phi;
+        oarc << updated;
     }
     void load(graphlab::iarchive& iarc) {
-        iarc >> phi;
         phis.clear();
         size_t size;
         iarc >> size;
@@ -38,6 +38,8 @@ struct vertex_data : graphlab::IS_POD_TYPE {
             iarc >> u >> v;
             phis.push_back(std::make_pair(u,v));
         }
+        iarc >> phi;
+        iarc >> updated;
     }
 };
 
@@ -271,7 +273,7 @@ int main(int argc, char** argv)
     
     t.start();
     
-    for(min_pi = graph.map_reduce_edges<min_t>(get_min_pi).value, pi = min_pi; pi <= max_pi; pi = graph.map_reduce_edges<min_t>(get_next_pi).value)
+    for(pi = graph.map_reduce_edges<min_t>(get_min_pi).value; pi <= max_pi; pi = graph.map_reduce_edges<min_t>(get_next_pi).value)
     {
         graph.transform_vertices(set_kcoret_initialvalues);
         
