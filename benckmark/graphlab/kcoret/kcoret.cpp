@@ -7,14 +7,16 @@
 
 
 const int inf = 1e9;
-int pi, max_pi;
+int pi, min_pi, max_pi;
 
 struct vertex_data : graphlab::IS_POD_TYPE {
     std::vector< std::pair<int, int> > phis;
     int phi;
+    bool updated;
     vertex_data()
         : phis()
     {
+        updated = false;
     }
     
     void save(graphlab::oarchive& oarc) const{
@@ -111,7 +113,7 @@ class kcoret : public graphlab::ivertex_program<graph_type, kcoret_gatherer>,
             }
             kcoret_gatherer gather(icontext_type& context, const vertex_type& vertex,
                     edge_type& edge) const {
-                if(edge.data() >= pi) // filtering
+                if(edge.data() < pi) // filtering
                    return kcoret_gatherer(-1);
                 else
                    return kcoret_gatherer(edge.source().data().phi);
@@ -119,7 +121,11 @@ class kcoret : public graphlab::ivertex_program<graph_type, kcoret_gatherer>,
             void apply(icontext_type& context, vertex_type& vertex,
                     const gather_type& total)
             {
-                if(vertex.num_out_edges() == 0) return;
+                if(total.P.size() == 0)
+                {
+                    vertex.data().updated = false;
+                    return;
+                }
 
                 changed = false;
                 int x = subfunc(vertex, total);
@@ -148,11 +154,16 @@ class kcoret : public graphlab::ivertex_program<graph_type, kcoret_gatherer>,
 
 void set_kcoret_initialvalues(graph_type::vertex_type& vdata) {
     vdata.data().phi = vdata.num_out_edges(); // num_out_edges should equal to num_in_edges
+    vdata.data().updated = true;
 }
 
 void add_phi(graph_type::vertex_type& vdata) {
+    
+    if(vdata.data().updated == false) return;
     if(vdata.data().phis.size() == 0 || vdata.data().phi < vdata.data().phis.back().second)
         vdata.data().phis.push_back( std::make_pair(pi, vdata.data().phi ) ); // num_out_edges should equal to num_in_edges
+    else
+        vdata.data().phis.back().first = pi;
 }
 
 
@@ -168,6 +179,7 @@ struct kcoret_writer {
                 strm << " ";
             strm << phis[i].first << " " << phis[i].second;
         }
+        strm << "\n";
         return strm.str();
     }
     std::string save_edge(graph_type::edge_type e)
@@ -190,7 +202,7 @@ bool line_parser(graph_type& graph, const std::string& filename,
         graphlab::vertex_id_type other_vid;
         int t,val;
         ssin >> other_vid >> t;
-        while(t--)
+        for(int i = 0 ;i < t ; i ++)
             ssin >> val;
         graph.add_edge(vid, other_vid, t);
     }
@@ -250,7 +262,6 @@ int main(int argc, char** argv)
     graph.load(input_file, line_parser);
     graph.finalize();
 
-    graph.transform_vertices(set_kcoret_initialvalues);
 
     max_pi = graph.map_reduce_edges<max_t>(get_max_pi).value;
 
@@ -260,8 +271,10 @@ int main(int argc, char** argv)
     
     t.start();
     
-    for(pi = graph.map_reduce_edges<min_t>(get_min_pi).value; pi <= max_pi; pi = graph.map_reduce_edges<min_t>(get_next_pi).value)
+    for(min_pi = graph.map_reduce_edges<min_t>(get_min_pi).value, pi = min_pi; pi <= max_pi; pi = graph.map_reduce_edges<min_t>(get_next_pi).value)
     {
+        graph.transform_vertices(set_kcoret_initialvalues);
+        
         graphlab::omni_engine<kcoret> engine(dc, graph, exec_type);
         engine.signal_all();
         engine.start();
