@@ -24,7 +24,7 @@ obinstream& operator>>(obinstream& m, kcoreValue& v)
 class kcoreVertex : public Vertex<VertexID, kcoreValue, intpair> {
 public:
     int phi;
-    hash_map<int,int> P;
+    hash_map<int, int> P;
     int subfunc(kcoreVertex* v)
     {
         vector<VertexID>& edges = v->value().edges;
@@ -50,18 +50,16 @@ public:
             phi = edges.size();
             for (int i = 0; i < edges.size(); i++) {
                 send_message(edges[i], intpair(id, phi));
-                P[ edges[i] ] = inf;
+                P[edges[i]] = inf;
             }
-            if(phi == 0)
-            {
+            if (phi == 0) {
                 vote_to_halt();
             }
         } else {
             for (int i = 0; i < messages.size(); i++) {
                 int u = messages[i].v1;
                 int k = messages[i].v2;
-                if(P[u] > k)
-                {
+                if (P[u] > k) {
                     P[u] = k;
                 }
             }
