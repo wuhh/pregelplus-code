@@ -8,7 +8,7 @@
 const int inf = 1e9;
 int pi, max_pi;
 
-struct vertex_data : graphlab::IS_POD_TYPE {
+struct vertex_data{
     std::vector<std::pair<int, int> > phis;
     int phi;
     bool updated;
