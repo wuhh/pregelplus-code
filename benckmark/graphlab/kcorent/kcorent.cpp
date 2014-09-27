@@ -9,7 +9,7 @@ const int inf = 1e9;
 int pi, max_pi;
 int CURRENT_K;
 
-struct vertex_data {
+struct vertex_data{
     std::vector<std::pair<int, int> > phis;
     int phi;
     bool updated;
@@ -90,16 +90,18 @@ struct kcorent_gatherer {
     }
 };
 
+
 class InitDeg : public graphlab::ivertex_program<graph_type, int>,
-                public graphlab::IS_POD_TYPE {
+               public graphlab::IS_POD_TYPE {
 public:
+
     edge_dir_type gather_edges(icontext_type& context,
                                const vertex_type& vertex) const
     {
         return graphlab::IN_EDGES;
     }
     int gather(icontext_type& context, const vertex_type& vertex,
-               edge_type& edge) const
+                           edge_type& edge) const
     {
         if (edge.data() < pi) // filtering
             return 0;
@@ -124,7 +126,8 @@ public:
     }
 };
 
-class kcorent : public graphlab::ivertex_program<graph_type, graphlab::empty, int>, public graphlab::IS_POD_TYPE {
+class kcorent :  public graphlab::ivertex_program<graph_type, graphlab::empty,int>, public graphlab::IS_POD_TYPE  
+{
     void add_phi(vertex_type& vdata)
     {
         if (vdata.data().phis.size() == 0 || CURRENT_K < vdata.data().phis.back().second)
@@ -132,33 +135,25 @@ class kcorent : public graphlab::ivertex_program<graph_type, graphlab::empty, in
         else
             vdata.data().phis.back().first = pi;
     }
-
 public:
     int msg;
     bool just_deleted;
 
-    kcorent()
-        : msg(0)
-        , just_deleted(false)
-    {
-    }
+    kcorent():msg(0),just_deleted(false) { }
 
     void init(icontext_type& context, const vertex_type& vertex,
-              const message_type& message)
-    {
+            const message_type& message) {
         msg = message;
         just_deleted = false;
     }
 
     edge_dir_type gather_edges(icontext_type& context,
-                               const vertex_type& vertex) const
-    {
+            const vertex_type& vertex) const {
         return graphlab::NO_EDGES;
     }
 
     void apply(icontext_type& context, vertex_type& vertex,
-               const gather_type& unused)
-    {
+            const gather_type& unused) {
         if (vertex.data().phi > 0) {
             vertex.data().phi -= msg;
             if (vertex.data().phi <= CURRENT_K) {
@@ -167,23 +162,24 @@ public:
                 vertex.data().phi = 0;
             }
         }
-    }
+    } 
 
     edge_dir_type scatter_edges(icontext_type& context,
-                                const vertex_type& vertex) const
-    {
-        return just_deleted ? graphlab::OUT_EDGES : graphlab::NO_EDGES;
+            const vertex_type& vertex) const {
+        return just_deleted ?
+            graphlab::OUT_EDGES : graphlab::NO_EDGES;
     }
 
     void scatter(icontext_type& context,
-                 const vertex_type& vertex,
-                 edge_type& edge) const
-    {
+            const vertex_type& vertex,
+            edge_type& edge) const {
         if (edge.target().data().phi > 0 && edge.data() >= pi) {
             context.signal(edge.target(), 1);
         }
     }
+
 };
+
 
 void set_kcorent_initialvalues(graph_type::vertex_type& vdata)
 {
@@ -212,7 +208,7 @@ struct kcorent_writer {
 };
 
 bool line_parser(graph_type& graph, const std::string& filename,
-                 const std::string& textline)
+        const std::string& textline)
 {
     std::istringstream ssin(textline);
     graphlab::vertex_id_type vid;
@@ -282,21 +278,29 @@ min_t get_next_pi(const graph_type::edge_type& edge)
         return min_t();
 }
 
+min_t get_next_deg(const graph_type::vertex_type& vertex) {
+    if(vertex.data().phi > 0)
+        return min_t(vertex.data().phi);
+    else
+        return min_t();
+}
+
+
 typedef graphlab::synchronous_engine<kcorent> engine_type;
 
 graphlab::empty signal_vertices_at_k(engine_type::icontext_type& ctx,
-                                     const graph_type::vertex_type& vertex)
-{
+        const graph_type::vertex_type& vertex) {
     if (vertex.data().phi > 0 && vertex.data().phi <= CURRENT_K) {
         ctx.signal(vertex, 0);
     }
     return graphlab::empty();
 }
 
-size_t count_active_vertices(const graph_type::vertex_type& vertex)
-{
+size_t count_active_vertices(const graph_type::vertex_type& vertex) {
     return vertex.data().phi > 0;
 }
+
+
 
 int main(int argc, char** argv)
 {
@@ -317,7 +321,7 @@ int main(int argc, char** argv)
     max_pi = graph.map_reduce_edges<max_t>(get_max_pi).value;
 
     dc.cout() << "Loading graph in " << t.current_time() << " seconds"
-              << std::endl;
+        << std::endl;
 
     t.start();
 
@@ -327,29 +331,32 @@ int main(int argc, char** argv)
         engine.signal_all();
         engine.start();
 
-        for (CURRENT_K = 0;; CURRENT_K++) {
+        for(CURRENT_K = graph.map_reduce_vertices<min_t>(get_next_deg).value; ; CURRENT_K = graph.map_reduce_vertices<min_t>(get_next_deg).value)
+        {
             graphlab::omni_engine<kcorent> subengine(dc, graph, exec_type);
             subengine.map_reduce_vertices<graphlab::empty>(signal_vertices_at_k);
             subengine.start();
 
             size_t numv = graph.map_reduce_vertices<size_t>(count_active_vertices);
             dc.cout() << "current pi:  " << pi << " current_k: " << CURRENT_K << " numv: " << numv << std::endl;
-
-            if (numv == 0)
-                break;
+            
+            if(numv == 0) break;
+            
         }
+
+
     }
 
     dc.cout() << "Finished Running engine in " << t.current_time()
-              << " seconds." << std::endl;
+        << " seconds." << std::endl;
 
     t.start();
 
     graph.save(output_file, kcorent_writer(), false, // set to true if each output file is to be gzipped
-               true, // whether vertices are saved
-               false); // whether edges are saved
+            true, // whether vertices are saved
+            false); // whether edges are saved
     dc.cout() << "Dumping graph in " << t.current_time() << " seconds"
-              << std::endl;
+        << std::endl;
 
     graphlab::mpi_tools::finalize();
 }
