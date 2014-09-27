@@ -12,72 +12,31 @@ import org.apache.giraph.Algorithm;
 
 import com.google.common.collect.Lists;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
-@Algorithm(name = "kcoret", description = "kcoret")
-public class Kcoret extends
-		Vertex<IntWritable, KcoretWritable, IntWritable, PairWritable> {
+@Algorithm(name = "Kcorent", description = "Kcorent")
+public class Kcorent extends
+		Vertex<IntWritable, KcorentWritable, IntWritable, IntWritable> {
 
 	public static final int RemoveEdgesAndCalculatePi = 0;
 	public static final int KcoreT = 1;
 
 	private static String TemporalPi = "TemporalPi";
+	private static String TemporalDeg = "TemporalDeg";
 	private static String UpdatedVerticesNum = "UpdatedVerticesNum";
 
 	private int inf = (int) 1e9;
 
-	private int subfunc(Kcoret vertex) throws Exception {
-		HashMap<Integer, Integer> P = this.getValue().getP();
-		int phi = this.getValue().getPhi();
-
-		int[] cd = new int[vertex.getValue().getPhi() + 2];
-		Arrays.fill(cd, 0);
-
-		for (Edge<IntWritable, IntWritable> edge : getEdges()) {
-			if (P.get(edge.getTargetVertexId().get()) > phi)
-				P.put(edge.getTargetVertexId().get(), phi);
-			cd[P.get(edge.getTargetVertexId().get())]++;
-		}
-		for (int i = phi; i >= 1; i--) {
-			cd[i] += cd[i + 1];
-			if (cd[i] >= i) {
-				return i;
-			}
-		}
-		throw new Exception("subfunc");
-	}
-
 	@Override
-	public void compute(Iterable<PairWritable> messages) throws IOException {
+	public void compute(Iterable<IntWritable> messages) {
 
-		HashMap<Integer, Integer> P = this.getValue().getP();
-
-		int phase = KcoretWorkerContext.getPhase();
+		int phase = KcorentWorkerContext.getPhase();
 
 		if (phase == RemoveEdgesAndCalculatePi) {
 
-			int phi = this.getValue().getPhi();
+			int pi = KcorentWorkerContext.getPI();
 
-			int pi = KcoretWorkerContext.getPI();
-
-			Vector<Integer> phis = this.getValue().getPhis();
-			Vector<Integer> H = this.getValue().getH();
-			if (this.getSuperstep() > 0) {
-				if (phis.size() == 0 || phi < phis.get(phis.size() - 1)) {
-					phis.add(phi);
-					H.add(pi);
-				} else {
-					H.set(H.size() - 1, pi);
-				}
-			}
-			
-			phi = this.getNumEdges();
-			this.getValue().setPhi(phi);
-			
 			int nume = 0;
 
 			for (Edge<IntWritable, IntWritable> edge : getEdges()) {
@@ -98,19 +57,14 @@ public class Kcoret extends
 			if (edges.size() > 0) {
 				aggregate(TemporalPi, new IntWritable(edges.get(nume - 1)
 						.getValue().get()));
+				aggregate(TemporalDeg, new IntWritable(edges.size()));
 			}
 
 			this.setEdges(edges);
 
-			phi = this.getNumEdges();
+			int phi = this.getNumEdges();
+
 			this.getValue().setPhi(phi);
-
-			for (Edge<IntWritable, IntWritable> edge : getEdges()) {
-
-				P.put(edge.getTargetVertexId().get(), inf);
-				this.sendMessage(edge.getTargetVertexId(), new PairWritable(
-						this.getId().get(), this.getValue().getPhi()));
-			}
 
 			if (phi == 0) {
 				this.voteToHalt();
@@ -118,48 +72,58 @@ public class Kcoret extends
 
 		} else {
 
-			if (KcoretWorkerContext.getPI() == Integer.MAX_VALUE) {
+			if (KcorentWorkerContext.getPI() == Integer.MAX_VALUE) {
 				this.voteToHalt();
 				return;
 			}
-
-			for (PairWritable message : messages) {
-				int u = message.getKey();
-				int k = message.getValue();
-				if (P.get(u) > k)
-					P.put(u, k);
+			if (this.getValue().getPhi() == 0) {
+				return;
 			}
 
-			int x = inf;
-			try {
-				x = subfunc(this);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			int sum = 0;
+			for (IntWritable message : messages) {
+				sum += message.get();
 			}
-			if (x < this.getValue().getPhi()) {
-				aggregate(UpdatedVerticesNum, new IntWritable(1));
 
-				this.getValue().setPhi(x);
+			int phi = this.getValue().getPhi() - sum;
 
+			if (phi <= KcorentWorkerContext.getCURRENT_K()) {
 				for (Edge<IntWritable, IntWritable> edge : getEdges()) {
-					if (this.getValue().getPhi() < P.get(edge
-							.getTargetVertexId().get())) {
-						this.sendMessage(edge.getTargetVertexId(),
-								new PairWritable(this.getId().get(), this
-										.getValue().getPhi()));
-					}
+					this.sendMessage(edge.getTargetVertexId(), new IntWritable(
+							1));
 				}
+
+				int pi = KcorentWorkerContext.getPI();
+
+				Vector<Integer> phis = this.getValue().getPhis();
+				Vector<Integer> H = this.getValue().getH();
+
+				if (phis.size() == 0
+						|| KcorentWorkerContext.getCURRENT_K() < phis.get(phis
+								.size() - 1)) {
+					phis.add(KcorentWorkerContext.getCURRENT_K());
+					H.add(pi);
+				} else {
+					H.set(H.size() - 1, pi);
+				}
+
+				this.getValue().setPhi(0);
+				aggregate(UpdatedVerticesNum, new IntWritable(1));
+			} else {
+				this.getValue().setPhi(phi);
+				aggregate(TemporalDeg, new IntWritable(phi));
+
 			}
-			//voteToHalt();
+			// voteToHalt();
 		}
 
 	}
 
-	public static class KcoretWorkerContext extends WorkerContext {
+	public static class KcorentWorkerContext extends WorkerContext {
 
 		private static int phase;
 		private static int PI;
+		private static int CURRENT_K;
 
 		public static int getPhase() {
 			return phase;
@@ -169,9 +133,13 @@ public class Kcoret extends
 			return PI;
 		}
 
+		public static int getCURRENT_K() {
+			return CURRENT_K;
+		}
+
 		@Override
 		public void preSuperstep() {
-			
+
 			if (this.getSuperstep() == 0)
 				PI = 0;
 
@@ -186,13 +154,26 @@ public class Kcoret extends
 					PI = (this.<IntWritable> getAggregatedValue(TemporalPi))
 							.get();
 					phase = KcoreT;
-				} else if (phase == KcoreT && updatedVerticesNum == 0) {
-					phase = RemoveEdgesAndCalculatePi;
+					CURRENT_K = this.<IntWritable> getAggregatedValue(
+							TemporalDeg).get();
+				} else if (phase == KcoreT) {
+					if (updatedVerticesNum == 0) {
+						
+						if(CURRENT_K == Integer.MAX_VALUE)
+						{
+							phase = RemoveEdgesAndCalculatePi;
+						}
+						else
+						{
+							CURRENT_K = this.<IntWritable> getAggregatedValue(
+									TemporalDeg).get();
+						}
+					} 
 				}
 			}
 			System.out.println("step: " + this.getSuperstep() + " phase: "
 					+ phase + " updatedVerticesNum " + updatedVerticesNum
-					+ " PI: " + PI);
+					+ " PI: " + PI + " CURRENT_K: " + CURRENT_K);
 		}
 
 		@Override
@@ -218,11 +199,12 @@ public class Kcoret extends
 	 * Master compute associated with {@link SimplePageRankComputation}. It
 	 * registers required aggregators.
 	 */
-	public static class KcoretMasterCompute extends DefaultMasterCompute {
+	public static class KcorentMasterCompute extends DefaultMasterCompute {
 		@Override
 		public void initialize() throws InstantiationException,
 				IllegalAccessException {
 			registerAggregator(TemporalPi, IntMinAggregator.class);
+			registerAggregator(TemporalDeg, IntMinAggregator.class);
 			registerAggregator(UpdatedVerticesNum, IntSumAggregator.class);
 
 		}

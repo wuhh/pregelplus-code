@@ -1,6 +1,5 @@
 package org.apache.giraph.examples;
 
-import org.apache.giraph.aggregators.IntSumAggregator;
 import org.apache.giraph.aggregators.LongSumAggregator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.graph.Vertex;
@@ -12,7 +11,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.giraph.Algorithm;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Vector;
 

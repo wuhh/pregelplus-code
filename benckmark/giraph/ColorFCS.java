@@ -11,7 +11,6 @@ import org.apache.giraph.worker.WorkerContext;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Writable;
 import org.apache.giraph.Algorithm;
 
 import com.google.common.collect.Lists;

@@ -1,11 +1,10 @@
+
 package org.apache.giraph.examples;
 
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
-
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -20,23 +19,22 @@ import java.util.regex.Pattern;
  * Input format for HashMin IntWritable, NullWritable, NullWritable Vertex ,
  * Vertex Value, Edge Value Graph vertex \t neighbor1 neighbor 2
  */
-public class SVInputFormat extends
-	TextVertexInputFormat<IntWritable, SVWritable, NullWritable> {
+public class KcoreInputFormat extends
+		TextVertexInputFormat<IntWritable, KcoreWritable, NullWritable> {
     /** Separator of the vertex and neighbors */
     private static final Pattern SEPARATOR = Pattern.compile("[\t ]");
 
     @Override
     public TextVertexReader createVertexReader(InputSplit split,
 	    TaskAttemptContext context) throws IOException {
-	return new SVVertexReader();
+    	return new KcoreVertexReader();
     }
 
     /**
      * Vertex reader associated with {@link IntIntNullTextInputFormat}.
      */
-    public class SVVertexReader extends
+    public class KcoreVertexReader extends
 	    TextVertexReaderFromEachLineProcessed<String[]> {
-
 	private IntWritable id;
 
 	@Override
@@ -52,17 +50,15 @@ public class SVInputFormat extends
 	}
 
 	@Override
-	protected SVWritable getValue(String[] tokens) throws IOException {
-	    return new SVWritable(id.get(), false);
+	protected KcoreWritable getValue(String[] tokens) throws IOException {
+	    return new KcoreWritable(tokens.length - 2);
 	}
 
 	@Override
 	protected Iterable<Edge<IntWritable, NullWritable>> getEdges(
 		String[] tokens) throws IOException {
-
 	    List<Edge<IntWritable, NullWritable>> edges = Lists
 		    .newArrayListWithCapacity(tokens.length - 2);
-
 	    for (int n = 2; n < tokens.length; n++) {
 		edges.add(EdgeFactory.create(new IntWritable(Integer
 			.parseInt(tokens[n]))));

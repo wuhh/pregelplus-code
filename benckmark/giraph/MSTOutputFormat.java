@@ -6,7 +6,6 @@ import java.util.Vector;
 
 import org.apache.giraph.graph.Vertex;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 
 import org.apache.hadoop.mapreduce.TaskAttemptContext;

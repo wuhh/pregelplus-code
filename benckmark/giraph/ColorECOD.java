@@ -1,14 +1,12 @@
 package org.apache.giraph.examples;
 
 import org.apache.giraph.aggregators.IntSumAggregator;
-import org.apache.giraph.aggregators.BooleanOrAggregator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.graph.Vertex;
 import org.apache.giraph.master.DefaultMasterCompute;
 import org.apache.giraph.worker.WorkerContext;
 
-import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.giraph.Algorithm;

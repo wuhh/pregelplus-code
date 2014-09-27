@@ -2,10 +2,7 @@ package org.apache.giraph.examples;
 
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
-
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -13,6 +10,8 @@ import org.apache.giraph.io.formats.TextVertexInputFormat;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -20,23 +19,22 @@ import java.util.regex.Pattern;
  * Input format for HashMin IntWritable, NullWritable, NullWritable Vertex ,
  * Vertex Value, Edge Value Graph vertex \t neighbor1 neighbor 2
  */
-public class SVInputFormat extends
-	TextVertexInputFormat<IntWritable, SVWritable, NullWritable> {
+public class KcorentInputFormat extends
+		TextVertexInputFormat<IntWritable, KcorentWritable, IntWritable> {
     /** Separator of the vertex and neighbors */
     private static final Pattern SEPARATOR = Pattern.compile("[\t ]");
 
     @Override
     public TextVertexReader createVertexReader(InputSplit split,
 	    TaskAttemptContext context) throws IOException {
-	return new SVVertexReader();
+    	return new KcorentVertexReader();
     }
 
     /**
      * Vertex reader associated with {@link IntIntNullTextInputFormat}.
      */
-    public class SVVertexReader extends
+    public class KcorentVertexReader extends
 	    TextVertexReaderFromEachLineProcessed<String[]> {
-
 	private IntWritable id;
 
 	@Override
@@ -52,21 +50,36 @@ public class SVInputFormat extends
 	}
 
 	@Override
-	protected SVWritable getValue(String[] tokens) throws IOException {
-	    return new SVWritable(id.get(), false);
+	protected KcorentWritable getValue(String[] tokens) throws IOException {
+	    return new KcorentWritable();
 	}
 
 	@Override
-	protected Iterable<Edge<IntWritable, NullWritable>> getEdges(
+	protected Iterable<Edge<IntWritable, IntWritable>> getEdges(
 		String[] tokens) throws IOException {
-
-	    List<Edge<IntWritable, NullWritable>> edges = Lists
-		    .newArrayListWithCapacity(tokens.length - 2);
-
-	    for (int n = 2; n < tokens.length; n++) {
-		edges.add(EdgeFactory.create(new IntWritable(Integer
-			.parseInt(tokens[n]))));
-	    }
+	    
+		int num = Integer.parseInt(tokens[1]);
+		
+		List<Edge<IntWritable, IntWritable>> edges = Lists
+			    .newArrayListWithCapacity(num);
+		
+		
+		for(int i = 0, it = 2; i < num; i ++)
+		{
+			int v = Integer.parseInt(tokens[it++]);
+			int t = Integer.parseInt(tokens[it++]);
+			it += t;	
+			edges.add(EdgeFactory.create(new IntWritable(v),new IntWritable(t) ));
+		}
+		
+		Collections.sort(edges,new Comparator<Edge<IntWritable, IntWritable>>(){  
+            @Override  
+            public int compare(Edge<IntWritable, IntWritable> b1, Edge<IntWritable, IntWritable> b2) {  
+            	return b1.getValue().get() -  b2.getValue().get();
+            }  
+              
+        });
+		
 	    return edges;
 	}
     }

@@ -44,7 +44,8 @@ public class FieldbcastInputFormat extends
 		protected String[] preprocessLine(Text line) throws IOException {
 			String[] tokens = SEPARATOR.split(line.toString());
 			id = new IntWritable(Integer.parseInt(tokens[0]));
-			value = new IntWritable(Integer.parseInt(tokens[1]));
+			//value = new IntWritable(Integer.parseInt(tokens[1]));
+			value = new IntWritable(0);
 			return tokens;
 		}
 
@@ -62,8 +63,8 @@ public class FieldbcastInputFormat extends
 		protected Iterable<Edge<IntWritable, IntWritable>> getEdges(
 				String[] tokens) throws IOException {
 			List<Edge<IntWritable, IntWritable>> edges = Lists
-					.newArrayListWithCapacity(tokens.length - 3);
-			for (int n = 3; n < tokens.length; n ++) {
+					.newArrayListWithCapacity(tokens.length - 2);
+			for (int n = 2; n < tokens.length; n ++) {
 				edges.add(EdgeFactory.create(
 						new IntWritable(Integer.parseInt(tokens[n])),
 						new IntWritable(-1)));
