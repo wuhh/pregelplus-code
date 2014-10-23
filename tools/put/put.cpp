@@ -1,7 +1,7 @@
-#include "utils/ydhdfs.h"
+#include "utils/io.h"
 
 int main(int argc, char** argv)
 {
-    put(argv[1], argv[2]);
+    putf(argv[1], argv[2]);
     return 0;
 }

@@ -305,20 +305,22 @@ struct BufferedWriter {
 void putf(char* localpath, char* hdfspath, bool force = true) //force put, overwrites target
 {
     dirCheck(hdfspath, 1, force);
-
     hdfsFS fs = getHdfsFS();
     hdfsFS lfs = getlocalFS();
 
-    BufferedReader reader(localpath, lfs);
-    BufferedWriter writer(hdfspath, fs);
+    BufferedReader* reader = new BufferedReader(localpath, lfs);
+    BufferedWriter* writer = new BufferedWriter(hdfspath, fs, 0);
 
     const char* line = 0;
 
-    while ((line = reader.getLine()) != NULL) {
-        writer.check();
-        writer.write(line);
-        writer.write("\n");
+    while ((line = reader->getLine()) != NULL) {
+        writer->check();
+        writer->write(line);
+        writer->write("\n");
     }
+
+    delete reader;
+    delete writer;
 
     hdfsDisconnect(lfs);
     hdfsDisconnect(fs);
