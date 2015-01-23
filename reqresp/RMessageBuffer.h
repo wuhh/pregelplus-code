@@ -41,7 +41,7 @@ public:
 
     VMap vmap;
 
-    void init(vector<RVertexT*> vertexes)
+    void init(vector<RVertexT*>& vertexes)
     {
         v_msg_bufs.resize(vertexes.size());
         in_req_sets.resize(_num_workers);
