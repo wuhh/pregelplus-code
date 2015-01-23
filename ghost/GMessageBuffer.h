@@ -42,7 +42,7 @@ public:
     typedef vector<GEntry> GEntryList;
     typedef hash_map<KeyT, GEntryList> GhostTable;
 
-    void init(vector<GVertexT*> vertexes)
+    void init(vector<GVertexT*>& vertexes)
     {
         v_msg_bufs.resize(vertexes.size());
         for (int i = 0; i < vertexes.size(); i++) {
