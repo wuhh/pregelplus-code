@@ -26,7 +26,7 @@ public:
     vector<VertexT*> to_add;
     vector<MessageContainerT> v_msg_bufs;
     HashT hash;
-    void init(vector<VertexT*> vertexes)
+    void init(vector<VertexT*>& vertexes)
     {
         v_msg_bufs.resize(vertexes.size());
         for (int i = 0; i < vertexes.size(); i++) {
@@ -34,7 +34,7 @@ public:
             in_messages[v->id] = i; //CHANGED FOR VADD
         }
     }
-    void reinit(vector<VertexT*> vertexes)
+    void reinit(vector<VertexT*>& vertexes)
     {
         v_msg_bufs.resize(vertexes.size());
         in_messages.clear();
